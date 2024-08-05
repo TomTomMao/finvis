@@ -131,15 +131,7 @@ app.layout = html.Div([
         value='discrete',
         labelStyle={'display': 'inline-block', 'margin-right': '20px'}
     ),
-    dcc.RadioItems(
-        id='capital_map',
-        options=[
-            {'label': 'capital color', 'value': 'capital'},
-            {'label': 'ticker color', 'value': 'ticker'}
-        ],
-        value='ticker',
-        labelStyle={'display': 'inline-block', 'margin-right': '20px'}
-    ),
+
     dcc.Graph(id='line-chart')
 ])
 
@@ -148,10 +140,9 @@ app.layout = html.Div([
     Output('line-chart', 'figure'),
     [Input('bg-color', 'value'),
      Input('moving_average', 'value'),
-     Input('discrete_colormap', 'value'),
-     Input('capital_map', 'value')]
+     Input('discrete_colormap', 'value')]
 )
-def update_chart(bg_color, moving_average, discrete_colormap, capital_map):
+def update_chart(bg_color, moving_average, discrete_colormap):
     # Create the layout with the selected background color
     layout = go.Layout(
         title='Price/Share with Market Actions and Stock Prices',
@@ -177,12 +168,12 @@ def update_chart(bg_color, moving_average, discrete_colormap, capital_map):
     for index, ticker in enumerate(tickers):
         data = stocksPrice[ticker]
         color = []
-        if capital_map == 'ticker':
-            color = get_color_by_index(index, num_tickers, colormap)
-        else:
-            color = get_color_by_value(data['Realized Capital Gain & Loss'],
-                                       minRealizedCapitalGainAndLoss, maxRealizedCapitalGainAndLoss, colormap,
-                                       -1 if discrete_colormap == 'continuous' else NUM_COLOR_BIN)
+        # if capital_map == 'ticker':
+        #     color = get_color_by_index(index, num_tickers, colormap)
+        # else:
+        color = get_color_by_value(data['Realized Capital Gain & Loss'],
+                                    minRealizedCapitalGainAndLoss, maxRealizedCapitalGainAndLoss, colormap,
+                                    -1 if discrete_colormap == 'continuous' else NUM_COLOR_BIN)
         fig.add_trace(go.Scatter(
             x=data['price'].index,
             y=data['price']['50_day_MA' if '50_day_MA' in moving_average else 'Close'],
