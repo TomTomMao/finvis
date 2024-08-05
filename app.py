@@ -15,7 +15,7 @@ COLORBAR_Y = -0.25
 COLORBAR_LEN = 0.75
 
 
-def get_dummy_trace(colormap, minRealizedCapitalGainAndLoss, maxRealizedCapitalGainAndLoss):
+def get_dummy_trace(colormap, minROI, maxROI):
     original_colorscale = [
         [i / NUM_COLOR_BIN, f"rgb({int(colormap(i / NUM_COLOR_BIN)[0]*255)}, {int(colormap(
             i / NUM_COLOR_BIN)[1]*255)}, {int(colormap(i / NUM_COLOR_BIN)[2]*255)})"]
@@ -43,15 +43,15 @@ def get_dummy_trace(colormap, minRealizedCapitalGainAndLoss, maxRealizedCapitalG
             colorscale='RdYlGn',
             showscale=True,
             colorbar=dict(
-                title='Realized Capital Gain & Loss',
+                title='ROI',
                 titleside='bottom',
                 orientation='h',
                 x=COLORBAR_X,
                 y=COLORBAR_Y,
                 len=COLORBAR_LEN
             ),
-            cmin=minRealizedCapitalGainAndLoss,
-            cmax=maxRealizedCapitalGainAndLoss
+            cmin=minROI,
+            cmax=maxROI
         ),
         hoverinfo='none'
     )
@@ -64,19 +64,19 @@ def get_dummy_trace(colormap, minRealizedCapitalGainAndLoss, maxRealizedCapitalG
             colorscale=extended_colorscale,
             showscale=True,
             colorbar=dict(
-                title='Realized Capital Gain & Loss',
+                title='ROI',
                 titleside='bottom',
                 orientation='h',
                 x=COLORBAR_X,
                 y=COLORBAR_Y,
                 len=COLORBAR_LEN,
                 tickvals=np.linspace(
-                    minRealizedCapitalGainAndLoss, maxRealizedCapitalGainAndLoss, NUM_COLOR_BIN+1),
+                    minROI, maxROI, NUM_COLOR_BIN+1),
                 ticktext=[f'{val:.2f}' for val in np.linspace(
-                    minRealizedCapitalGainAndLoss, maxRealizedCapitalGainAndLoss, NUM_COLOR_BIN+1)]
+                    minROI, maxROI, NUM_COLOR_BIN+1)]
             ),
-            cmin=minRealizedCapitalGainAndLoss,
-            cmax=maxRealizedCapitalGainAndLoss
+            cmin=minROI,
+            cmax=maxROI
         ),
         hoverinfo='none'
     )
@@ -132,7 +132,7 @@ def addGainAndLossToStockPrice(stockPrice, df_meta):
     for _, row in df_meta.iterrows():
         if row['Ticker Symbol'] in stockPrice.keys():
             stockPrice[row['Ticker Symbol']
-                       ]['Realized Capital Gain & Loss'] = row['Realized Capital Gain & Loss']
+                       ]['ROI'] = row['ROI']
 
 
 # Read the data from the CSV file
@@ -166,7 +166,7 @@ sell_trace = go.Scatter(
 stocksPrice = getStockPrice(df)
 addGainAndLossToStockPrice(stocksPrice, df_meta)
 
-# Define a function to map realised capital gain and loss to colors
+# Define a function to map ROI to colors
 colormap = cm.get_cmap('RdYlGn')
 
 # Initialize the Dash app
@@ -258,10 +258,10 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max):
     # Add traces for stock prices
     tickers = list(stocksPrice.keys())
     # num_tickers = len(tickers)
-    realizedCapitalGainAndLoss = [
-        item['Realized Capital Gain & Loss']for item in stocksPrice.values()]
-    minRealizedCapitalGainAndLoss = min(realizedCapitalGainAndLoss)
-    maxRealizedCapitalGainAndLoss = max(realizedCapitalGainAndLoss)
+    ROI = [
+        item['ROI']for item in stocksPrice.values()]
+    minROI = min(ROI)
+    maxROI = max(ROI)
 
     for __, ticker in enumerate(tickers):
         data = stocksPrice[ticker]
@@ -269,8 +269,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max):
         # if capital_map == 'ticker':
         #     color = get_color_by_index(index, num_tickers, colormap)
         # else:
-        color = get_color_by_value(data['Realized Capital Gain & Loss'],
-                                   minRealizedCapitalGainAndLoss, maxRealizedCapitalGainAndLoss, colormap,
+        color = get_color_by_value(data['ROI'],
+                                   minROI, maxROI, colormap,
                                    -1 if discrete_colormap == 'continuous' else NUM_COLOR_BIN)
         fig.add_trace(go.Scatter(
             x=data['price'].index,
@@ -282,7 +282,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max):
         ))
 
     dummy_trace_continuous, dummy_trace_discrete = get_dummy_trace(
-        colormap, minRealizedCapitalGainAndLoss, maxRealizedCapitalGainAndLoss)
+        colormap, minROI, maxROI)
 
     if discrete_colormap == 'continuous':
         fig.add_trace(dummy_trace_continuous)
