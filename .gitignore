@@ -1,0 +1,4 @@
+.vercel
+.vscode
+venv
+__pycache__
