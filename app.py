@@ -136,11 +136,11 @@ def addGainAndLossToStockPrice(stockPrice, df_meta):
 
 
 # Read the data from the CSV file
-df = pd.read_csv('2020-2023.csv', delimiter='\t')
-df_meta = pd.read_csv('company meta 2020-2023.csv')
+df = pd.read_csv('2020-2024.csv')
+df_meta = pd.read_csv('company meta 2020-2024.csv')
 # Convert 'Transaction Date' to datetime
 df['Transaction Date'] = pd.to_datetime(
-    df['Transaction Date'], format='%m/%d/%Y')
+    df['Transaction Date'], format='%Y/%m/%d')
 
 # Create traces for each action type
 buy_trace = go.Scatter(
