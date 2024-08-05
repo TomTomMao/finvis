@@ -127,7 +127,7 @@ def getStockPrice(df):
     return tickerDate
 
 
-def addGainAndLossToStockPrice(stockPrice, df_meta):
+def addROIStockPrice(stockPrice, df_meta):
     # add gain
     for _, row in df_meta.iterrows():
         if row['Ticker Symbol'] in stockPrice.keys():
@@ -164,7 +164,7 @@ sell_trace = go.Scatter(
 )
 
 stocksPrice = getStockPrice(df)
-addGainAndLossToStockPrice(stocksPrice, df_meta)
+addROIStockPrice(stocksPrice, df_meta)
 
 # Define a function to map ROI to colors
 colormap = cm.get_cmap('RdYlGn')
@@ -269,16 +269,23 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max):
         # if capital_map == 'ticker':
         #     color = get_color_by_index(index, num_tickers, colormap)
         # else:
-        color = get_color_by_value(data['ROI'],
+        date = data['price'].index
+        price = data['price']['50_day_MA' if '50_day_MA' in moving_average else 'Close']
+        ROI = data['ROI']
+        color = get_color_by_value(ROI,
                                    minROI, maxROI, colormap,
                                    -1 if discrete_colormap == 'continuous' else NUM_COLOR_BIN)
         fig.add_trace(go.Scatter(
-            x=data['price'].index,
-            y=data['price']['50_day_MA' if '50_day_MA' in moving_average else 'Close'],
+            x=date,
+            y=price,
             mode='lines',
             name=ticker,
             line=dict(
-                color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=1)
+                color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=1),
+            hovertemplate=f"<b>Ticker:</b> {ticker}<br>"
+            f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
+            f"<b>Price / share:</b> %{{y:.2f}}<br>"
+            f"<b>ROI:</b> {ROI:.2f}<extra></extra>"
         ))
 
     dummy_trace_continuous, dummy_trace_discrete = get_dummy_trace(
