@@ -14,6 +14,47 @@ COLORBAR_X = 0.5
 COLORBAR_Y = -0.25
 COLORBAR_LEN = 0.75
 DEFAULT_LINE_WIDTH = 0.7
+MIN_MARKER_SIZE = 5
+MAX_MARKER_SIZE = 40
+
+import numpy as np
+
+class SizeMapper:
+    def __init__(self, range, scale=(0, 10), log=False):
+        """
+        Initialize the SizeMapper with the desired range and scale.
+
+        :param range: Tuple (min, max) representing the range of input values.
+        :param scale: Tuple (min, max) representing the range of output sizes.
+        :param log: Boolean indicating whether to apply logarithmic scaling.
+        """
+        self.min_val, self.max_val = range
+        self.min_size, self.max_size = scale
+        self.log = log
+
+    def __call__(self, value):
+        """
+        Map the input value to the corresponding size.
+
+        :param value: Input value to be scaled.
+        :return: Scaled size.
+        """
+        # Ensure min_val and max_val are floats
+        if isinstance(self.min_val, (int, float)) and isinstance(self.max_val, (int, float)):
+            # Clip the value to be within the min and max range
+            value = np.clip(value, self.min_val, self.max_val)
+            
+            # Apply logarithmic scaling if requested
+            if self.log:
+                value = np.log(value) if value > 0 else self.min_val
+            
+            # Normalize the value to [0, 1]
+            normalized_value = (value - self.min_val) / (self.max_val - self.min_val)
+            
+            # Scale the normalized value to the desired size range
+            return self.min_size + normalized_value * (self.max_size - self.min_size)
+        else:
+            raise ValueError("min_val and max_val must be numeric types")
 
 
 def get_dummy_trace(colormap, minROI, maxROI):
@@ -97,6 +138,7 @@ def get_color_by_value(value, minValue, maxValue, colormap, num_bins=-1):
     bin_index = np.clip(bin_index, 0, num_bins - 1)
 
     return colormap(bins[bin_index])
+
 
 def getStockPrice(df):
     df_ticker_date = df.groupby('Ticker').agg({
@@ -240,33 +282,47 @@ app.layout = html.Div([
 )
 def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter):
     # Create the layout with the selected background color
-    # Read the data from the CSV file
-
+    
+    # add marker size based on the min and max value for the market buy and sell action
+    minTotal = df[(df['Action'] ==
+                  'Market buy') | (df['Action'] == 'Market sell')]['Total'].min()
+    maxTotal = df[(df['Action'] ==
+                  'Market buy') | (df['Action'] == 'Market sell')]['Total'].max()
+    print('minTotal=', minTotal)
+    print('maxTotal=', maxTotal)
+    size_mapper = SizeMapper(range=(minTotal, maxTotal), scale=(MIN_MARKER_SIZE, MAX_MARKER_SIZE), log=False)
+    df['Marker Size'] = df['Total'].apply(size_mapper)
+    df.to_csv('df.csv')
     # Filter the data by ROI
     if roi_filter in ['positive', 'negative']:
-        condition = lambda roi: roi >= 0 if roi_filter == 'positive' else roi < 0
-        roi_dict = {ticker: data['ROI'] for ticker, data in stocksPrice.items() if condition(data['ROI'])}
+        def condition(
+            roi): return roi >= 0 if roi_filter == 'positive' else roi < 0
+        roi_dict = {ticker: data['ROI'] for ticker,
+                    data in stocksPrice.items() if condition(data['ROI'])}
     else:  # roi_filter == 'all'
-        roi_dict = {ticker: data['ROI'] for ticker, data in stocksPrice.items()}
-
+        roi_dict = {ticker: data['ROI']
+                    for ticker, data in stocksPrice.items()}
     filtered_df = df[df['Ticker'].isin(roi_dict.keys())]
+
     # Create traces for each action type
     buy_trace = go.Scatter(
-        x=filtered_df[filtered_df['Action'] == 'Market buy']['Transaction Date'],
+        x=filtered_df[filtered_df['Action'] ==
+                      'Market buy']['Transaction Date'],
         y=filtered_df[filtered_df['Action'] == 'Market buy']['Price / share'],
         mode='markers',
         name='Market buy',
-        marker=dict(color='green', symbol='triangle-up', size=5),
+        marker=dict(color='green', symbol='triangle-up', size=filtered_df[filtered_df['Action'] == 'Market buy']['Marker Size']),
         text=filtered_df[filtered_df['Action'] == 'Market buy']['Ticker'],
         hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
     )
 
     sell_trace = go.Scatter(
-        x=filtered_df[filtered_df['Action'] == 'Market sell']['Transaction Date'],
+        x=filtered_df[filtered_df['Action'] ==
+                      'Market sell']['Transaction Date'],
         y=filtered_df[filtered_df['Action'] == 'Market sell']['Price / share'],
         mode='markers',
         name='Market sell',
-        marker=dict(color='red', symbol='triangle-down', size=5),
+        marker=dict(color='red', symbol='triangle-down', size=filtered_df[filtered_df['Action'] == 'Market buy']['Marker Size']),
         text=filtered_df[filtered_df['Action'] == 'Market sell']['Ticker'],
         hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
     )
