@@ -248,25 +248,32 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
     # Create the layout with the selected background color
     # Read the data from the CSV file
 
-    # filter the data by it's roi
+    # Filter the data by ROI
+    if roi_filter in ['positive', 'negative']:
+        condition = lambda roi: roi >= 0 if roi_filter == 'positive' else roi < 0
+        roi_dict = {ticker: data['ROI'] for ticker, data in stocksPrice.items() if condition(data['ROI'])}
+    else:  # roi_filter == 'all'
+        roi_dict = {ticker: data['ROI'] for ticker, data in stocksPrice.items()}
+
+    filtered_df = df[df['Ticker'].isin(roi_dict.keys())]
     # Create traces for each action type
     buy_trace = go.Scatter(
-        x=df[df['Action'] == 'Market buy']['Transaction Date'],
-        y=df[df['Action'] == 'Market buy']['Price / share'],
+        x=filtered_df[filtered_df['Action'] == 'Market buy']['Transaction Date'],
+        y=filtered_df[filtered_df['Action'] == 'Market buy']['Price / share'],
         mode='markers',
         name='Market buy',
         marker=dict(color='green', symbol='triangle-up', size=5),
-        text=df[df['Action'] == 'Market buy']['Ticker'],
+        text=filtered_df[filtered_df['Action'] == 'Market buy']['Ticker'],
         hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
     )
 
     sell_trace = go.Scatter(
-        x=df[df['Action'] == 'Market sell']['Transaction Date'],
-        y=df[df['Action'] == 'Market sell']['Price / share'],
+        x=filtered_df[filtered_df['Action'] == 'Market sell']['Transaction Date'],
+        y=filtered_df[filtered_df['Action'] == 'Market sell']['Price / share'],
         mode='markers',
         name='Market sell',
         marker=dict(color='red', symbol='triangle-down', size=5),
-        text=df[df['Action'] == 'Market sell']['Ticker'],
+        text=filtered_df[filtered_df['Action'] == 'Market sell']['Ticker'],
         hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
     )
     layout = go.Layout(
@@ -298,13 +305,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         color = get_color_by_value(ROI,
                                    minROI, maxROI, colormap,
                                    -1 if discrete_colormap == 'continuous' else NUM_COLOR_BIN)
-        if roi_filter == 'positive':
-            showTrace = ROI >= 0
-        elif roi_filter == 'negative':
-            showTrace = ROI < 0
-        elif roi_filter == 'all':
-            showTrace = True
-        if showTrace:
+        if ticker in roi_dict:
             fig.add_trace(go.Scatter(
                 x=date,
                 y=price,
