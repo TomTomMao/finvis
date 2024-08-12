@@ -98,12 +98,6 @@ def get_color_by_value(value, minValue, maxValue, colormap, num_bins=-1):
 
     return colormap(bins[bin_index])
 
-
-def get_color_by_index(index, total, colormap):
-    norm = plt.Normalize(vmin=0, vmax=total-1)
-    return cm.ScalarMappable(norm=norm, cmap=colormap).to_rgba(index)
-
-
 def getStockPrice(df):
     df_ticker_date = df.groupby('Ticker').agg({
         'Transaction Date': ['min', 'max']
