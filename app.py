@@ -17,7 +17,6 @@ DEFAULT_LINE_WIDTH = 0.7
 MIN_MARKER_SIZE = 5
 MAX_MARKER_SIZE = 40
 
-import numpy as np
 
 class SizeMapper:
     def __init__(self, range, scale=(0, 10), log=False):
@@ -43,14 +42,15 @@ class SizeMapper:
         if isinstance(self.min_val, (int, float)) and isinstance(self.max_val, (int, float)):
             # Clip the value to be within the min and max range
             value = np.clip(value, self.min_val, self.max_val)
-            
+
             # Apply logarithmic scaling if requested
             if self.log:
                 value = np.log(value) if value > 0 else self.min_val
-            
+
             # Normalize the value to [0, 1]
-            normalized_value = (value - self.min_val) / (self.max_val - self.min_val)
-            
+            normalized_value = (value - self.min_val) / \
+                (self.max_val - self.min_val)
+
             # Scale the normalized value to the desired size range
             return self.min_size + normalized_value * (self.max_size - self.min_size)
         else:
@@ -282,7 +282,7 @@ app.layout = html.Div([
 )
 def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter):
     # Create the layout with the selected background color
-    
+
     # add marker size based on the min and max value for the market buy and sell action
     minTotal = df[(df['Action'] ==
                   'Market buy') | (df['Action'] == 'Market sell')]['Total'].min()
@@ -290,7 +290,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
                   'Market buy') | (df['Action'] == 'Market sell')]['Total'].max()
     print('minTotal=', minTotal)
     print('maxTotal=', maxTotal)
-    size_mapper = SizeMapper(range=(minTotal, maxTotal), scale=(MIN_MARKER_SIZE, MAX_MARKER_SIZE), log=False)
+    size_mapper = SizeMapper(range=(minTotal, maxTotal), scale=(
+        MIN_MARKER_SIZE, MAX_MARKER_SIZE), log=False)
     df['Marker Size'] = df['Total'].apply(size_mapper)
     df.to_csv('df.csv')
     # Filter the data by ROI
@@ -311,7 +312,13 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         y=filtered_df[filtered_df['Action'] == 'Market buy']['Price / share'],
         mode='markers',
         name='Market buy',
-        marker=dict(color='green', symbol='triangle-up', size=filtered_df[filtered_df['Action'] == 'Market buy']['Marker Size']),
+        marker=dict(
+            color='green',
+            symbol='triangle-up',
+            size=filtered_df[filtered_df['Action']
+                             == 'Market buy']['Marker Size'],
+            line=dict(width=0)
+        ),
         text=filtered_df[filtered_df['Action'] == 'Market buy']['Ticker'],
         hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
     )
@@ -322,7 +329,13 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         y=filtered_df[filtered_df['Action'] == 'Market sell']['Price / share'],
         mode='markers',
         name='Market sell',
-        marker=dict(color='red', symbol='triangle-down', size=filtered_df[filtered_df['Action'] == 'Market buy']['Marker Size']),
+        marker=dict(
+            color='red',
+            symbol='triangle-down',
+            size=filtered_df[filtered_df['Action']
+                             == 'Market buy']['Marker Size'],
+            line=dict(width=0)
+        ),
         text=filtered_df[filtered_df['Action'] == 'Market sell']['Ticker'],
         hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
     )
