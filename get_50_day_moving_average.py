@@ -3,6 +3,7 @@ import pandas as pd
 import yfinance as yf
 from datetime import datetime, timedelta
 
+
 def get_50_day_moving_average(ticker, start_date, end_date):
     # Convert string dates to datetime objects
     start_date_dt = datetime.strptime(start_date, "%Y-%m-%d")
@@ -14,7 +15,8 @@ def get_50_day_moving_average(ticker, start_date, end_date):
         os.makedirs(directory)
 
     # Generate a filename based on the ticker and date range
-    file_name = os.path.join(directory, f"{ticker}_{start_date}_{end_date}_50_day_MA.csv")
+    file_name = os.path.join(directory, f"{ticker}_{start_date}_{
+                             end_date}_50_day_MA.csv")
 
     # Check if the file already exists
     if os.path.exists(file_name):
@@ -25,7 +27,8 @@ def get_50_day_moving_average(ticker, start_date, end_date):
     adjusted_start_date = start_date_dt - timedelta(days=100)
 
     # Fetch the stock data from the adjusted start date to the end date
-    stock_data = yf.download(ticker, start=adjusted_start_date, end=end_date)
+    stock_data = yf.download(
+        ticker, start=adjusted_start_date, end=end_date_dt + timedelta(days=1))
 
     # Check if the stock data is empty
     if stock_data.empty:
