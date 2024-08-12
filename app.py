@@ -13,6 +13,7 @@ NUM_COLOR_BIN = 5
 COLORBAR_X = 0.5
 COLORBAR_Y = -0.25
 COLORBAR_LEN = 0.75
+DEFAULT_LINE_WIDTH = 0.7
 
 
 def get_dummy_trace(colormap, minROI, maxROI):
@@ -123,7 +124,8 @@ def getStockPrice(df):
                 'max': max_date,
                 'price': price_data
             }
-
+    print(tickerDate['INTU']['max'])
+    print(tickerDate['INTU']['price'])
     return tickerDate
 
 
@@ -187,7 +189,7 @@ app.layout = html.Div([
                 value='white',
                 labelStyle={'display': 'block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '24%'}),
+        ], style={'width': '20%'}),
 
         html.Div([
             html.Label('Moving Average:'),
@@ -199,7 +201,7 @@ app.layout = html.Div([
                 value=[],
                 style={'width': '100%'}
             )
-        ], style={'width': '24%'}),
+        ], style={'width': '20%'}),
 
         html.Div([
             html.Label('Color Map Type:'),
@@ -212,7 +214,7 @@ app.layout = html.Div([
                 value='discrete',
                 labelStyle={'display': 'block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '24%'}),
+        ], style={'width': '20%'}),
 
         html.Div([
             html.Label('Y-axis Maximum Value:'),
@@ -223,7 +225,17 @@ app.layout = html.Div([
                 step=50,
                 style={'width': '50px'}
             )
-        ], style={'width': '24%'})
+        ], style={'width': '20%'}),
+        html.Div([
+            html.Label('Line Width:'),
+            dcc.Input(
+                id='line_width',
+                type='number',
+                value=DEFAULT_LINE_WIDTH,  # Default value for the y-axis maximum
+                step=0.1,
+                style={'width': '50px'}
+            )
+        ], style={'width': '20%'})
     ], style={'display': 'flex', 'justify-content': 'space-between', 'flex-wrap': 'wrap'}),
 
     # Second row for the chart
@@ -238,9 +250,11 @@ app.layout = html.Div([
     [Input('bg-color', 'value'),
      Input('moving_average', 'value'),
      Input('discrete_colormap', 'value'),
-     Input('default_y_max', 'value')]
+     Input('default_y_max', 'value'),
+     Input('line_width', 'value')
+     ]
 )
-def update_chart(bg_color, moving_average, discrete_colormap, default_y_max):
+def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width):
     # Create the layout with the selected background color
     layout = go.Layout(
         title='Price/Share with Market Actions and Stock Prices',
@@ -253,7 +267,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max):
     )
 
     # Create the figure and add traces
-    fig = go.Figure(data=[buy_trace, sell_trace], layout=layout)
+    fig = go.Figure(layout=layout)
 
     # Add traces for stock prices
     tickers = list(stocksPrice.keys())
@@ -281,12 +295,15 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max):
             mode='lines',
             name=ticker,
             line=dict(
-                color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=1),
+                color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=line_width),
             hovertemplate=f"<b>Ticker:</b> {ticker}<br>"
             f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
             f"<b>Price / share:</b> %{{y:.2f}}<br>"
             f"<b>ROI:</b> {ROI:.2f}<extra></extra>"
         ))
+
+    fig.add_trace(buy_trace)
+    fig.add_trace(sell_trace)
 
     dummy_trace_continuous, dummy_trace_discrete = get_dummy_trace(
         colormap, minROI, maxROI)
