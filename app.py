@@ -137,34 +137,11 @@ def addROIStockPrice(stockPrice, df_meta):
                        ]['ROI'] = row['ROI']
 
 
-# Read the data from the CSV file
 df = pd.read_csv('2020-2024.csv')
 df_meta = pd.read_csv('company meta 2020-2024.csv')
 # Convert 'Transaction Date' to datetime
 df['Transaction Date'] = pd.to_datetime(
     df['Transaction Date'], format='%Y/%m/%d')
-
-# Create traces for each action type
-buy_trace = go.Scatter(
-    x=df[df['Action'] == 'Market buy']['Transaction Date'],
-    y=df[df['Action'] == 'Market buy']['Price / share'],
-    mode='markers',
-    name='Market buy',
-    marker=dict(color='green', symbol='triangle-up', size=5),
-    text=df[df['Action'] == 'Market buy']['Ticker'],
-    hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
-)
-
-sell_trace = go.Scatter(
-    x=df[df['Action'] == 'Market sell']['Transaction Date'],
-    y=df[df['Action'] == 'Market sell']['Price / share'],
-    mode='markers',
-    name='Market sell',
-    marker=dict(color='red', symbol='triangle-down', size=5),
-    text=df[df['Action'] == 'Market sell']['Ticker'],
-    hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
-)
-
 stocksPrice = getStockPrice(df)
 addROIStockPrice(stocksPrice, df_meta)
 
@@ -189,8 +166,20 @@ app.layout = html.Div([
                 value='white',
                 labelStyle={'display': 'block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '20%'}),
-
+        ], style={'width': '16.6%'}),
+        html.Div([
+            html.Label('ROI Filter:'),
+            dcc.RadioItems(
+                id='roi-filter',
+                options=[
+                    {'label': 'all', 'value': 'all'},
+                    {'label': 'positive', 'value': 'positive'},
+                    {'label': 'negative', 'value': 'negative'}
+                ],
+                value='all',
+                labelStyle={'display': 'block', 'margin-bottom': '5px'}
+            )
+        ], style={'width': '16.6%'}),
         html.Div([
             html.Label('Moving Average:'),
             dcc.Checklist(
@@ -201,7 +190,7 @@ app.layout = html.Div([
                 value=[],
                 style={'width': '100%'}
             )
-        ], style={'width': '20%'}),
+        ], style={'width': '16.6%'}),
 
         html.Div([
             html.Label('Color Map Type:'),
@@ -214,7 +203,7 @@ app.layout = html.Div([
                 value='discrete',
                 labelStyle={'display': 'block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '20%'}),
+        ], style={'width': '16.6%'}),
 
         html.Div([
             html.Label('Y-axis Maximum Value:'),
@@ -225,7 +214,7 @@ app.layout = html.Div([
                 step=50,
                 style={'width': '50px'}
             )
-        ], style={'width': '20%'}),
+        ], style={'width': '16.6%'}),
         html.Div([
             html.Label('Line Width:'),
             dcc.Input(
@@ -235,7 +224,7 @@ app.layout = html.Div([
                 step=0.1,
                 style={'width': '50px'}
             )
-        ], style={'width': '20%'})
+        ], style={'width': '16.6%'})
     ], style={'display': 'flex', 'justify-content': 'space-between', 'flex-wrap': 'wrap'}),
 
     # Second row for the chart
@@ -251,11 +240,35 @@ app.layout = html.Div([
      Input('moving_average', 'value'),
      Input('discrete_colormap', 'value'),
      Input('default_y_max', 'value'),
-     Input('line_width', 'value')
+     Input('line_width', 'value'),
+     Input('roi-filter', 'value'),
      ]
 )
-def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width):
+def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter):
     # Create the layout with the selected background color
+    # Read the data from the CSV file
+
+    # filter the data by it's roi
+    # Create traces for each action type
+    buy_trace = go.Scatter(
+        x=df[df['Action'] == 'Market buy']['Transaction Date'],
+        y=df[df['Action'] == 'Market buy']['Price / share'],
+        mode='markers',
+        name='Market buy',
+        marker=dict(color='green', symbol='triangle-up', size=5),
+        text=df[df['Action'] == 'Market buy']['Ticker'],
+        hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
+    )
+
+    sell_trace = go.Scatter(
+        x=df[df['Action'] == 'Market sell']['Transaction Date'],
+        y=df[df['Action'] == 'Market sell']['Price / share'],
+        mode='markers',
+        name='Market sell',
+        marker=dict(color='red', symbol='triangle-down', size=5),
+        text=df[df['Action'] == 'Market sell']['Ticker'],
+        hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
+    )
     layout = go.Layout(
         title='Price/Share with Market Actions and Stock Prices',
         xaxis=dict(title='Date'),
@@ -279,28 +292,31 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     for __, ticker in enumerate(tickers):
         data = stocksPrice[ticker]
-        color = []
-        # if capital_map == 'ticker':
-        #     color = get_color_by_index(index, num_tickers, colormap)
-        # else:
         date = data['price'].index
         price = data['price']['50_day_MA' if '50_day_MA' in moving_average else 'Close']
         ROI = data['ROI']
         color = get_color_by_value(ROI,
                                    minROI, maxROI, colormap,
                                    -1 if discrete_colormap == 'continuous' else NUM_COLOR_BIN)
-        fig.add_trace(go.Scatter(
-            x=date,
-            y=price,
-            mode='lines',
-            name=ticker,
-            line=dict(
-                color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=line_width),
-            hovertemplate=f"<b>Ticker:</b> {ticker}<br>"
-            f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
-            f"<b>Price / share:</b> %{{y:.2f}}<br>"
-            f"<b>ROI:</b> {ROI:.2f}<extra></extra>"
-        ))
+        if roi_filter == 'positive':
+            showTrace = ROI >= 0
+        elif roi_filter == 'negative':
+            showTrace = ROI < 0
+        elif roi_filter == 'all':
+            showTrace = True
+        if showTrace:
+            fig.add_trace(go.Scatter(
+                x=date,
+                y=price,
+                mode='lines',
+                name=ticker,
+                line=dict(
+                    color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=line_width),
+                hovertemplate=f"<b>Ticker:</b> {ticker}<br>"
+                f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
+                f"<b>Price / share:</b> %{{y:.2f}}<br>"
+                f"<b>ROI:</b> {ROI:.2f}<extra></extra>"
+            ))
 
     fig.add_trace(buy_trace)
     fig.add_trace(sell_trace)
