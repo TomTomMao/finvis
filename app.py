@@ -16,6 +16,7 @@ COLORBAR_LEN = 0.75
 DEFAULT_LINE_WIDTH = 0.7
 MIN_MARKER_SIZE = 5
 MAX_MARKER_SIZE = 40
+SHADING_OPACITY = 0.3
 
 
 class SizeMapper:
@@ -259,7 +260,18 @@ app.layout = html.Div([
                 value=DEFAULT_LINE_WIDTH,  # Default value for the y-axis maximum
                 step=0.1,
                 style={'width': '50px'}
-            )
+            ),
+            html.Div([
+                dcc.Checklist(
+                    id='shading',
+                    options=[{
+                        'label': 'shading', 'value': 'shading'
+                    }],
+                    value=[],
+                    style={'width': '100%'}
+                )
+            ], style={'margin-top': '10px'})
+
         ], style={'width': '16.6%'})
     ], style={'display': 'flex', 'justify-content': 'space-between', 'flex-wrap': 'wrap'}),
 
@@ -278,9 +290,10 @@ app.layout = html.Div([
      Input('default_y_max', 'value'),
      Input('line_width', 'value'),
      Input('roi-filter', 'value'),
+     Input('shading', 'value')
      ]
 )
-def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter):
+def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter, shading):
     # Create the layout with the selected background color
 
     # add marker size based on the min and max value for the market buy and sell action
@@ -376,6 +389,9 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
                 name=ticker,
                 line=dict(
                     color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=line_width),
+                fill='tozeroy' if 'shading' in shading else 'none',
+                fillcolor=f'rgba({color[0]*255}, {color[1]
+                                                  * 255}, {color[2]*255}, {SHADING_OPACITY})',
                 hovertemplate=f"<b>Ticker:</b> {ticker}<br>"
                 f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
                 f"<b>Price / share:</b> %{{y:.2f}}<br>"
