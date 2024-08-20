@@ -13,7 +13,7 @@ NUM_COLOR_BIN = 5
 COLORBAR_X = 0.5
 COLORBAR_Y = -0.25
 COLORBAR_LEN = 0.75
-DEFAULT_LINE_WIDTH = 0.7
+DEFAULT_LINE_WIDTH = 1.3
 MIN_MARKER_SIZE = 5
 MAX_MARKER_SIZE = 40
 SHADING_OPACITY = 0.3
@@ -333,7 +333,12 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
             line=dict(width=0)
         ),
         text=filtered_df[filtered_df['Action'] == 'Market buy']['Ticker'],
-        hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
+        customdata=filtered_df[filtered_df['Action'] == 'Market buy']['Total'],
+        hovertemplate='<b>Ticker:</b> %{text}<br>'
+        '<b>Date:</b> %{x}<br>'
+        '<b>Price / share:</b> %{y}<br>'
+        '<b>Total:</b> %{customdata}<extra></extra>'
+
     )
 
     sell_trace = go.Scatter(
@@ -350,7 +355,12 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
             line=dict(width=0)
         ),
         text=filtered_df[filtered_df['Action'] == 'Market sell']['Ticker'],
-        hovertemplate='<b>Ticker:</b> %{text}<br><b>Date:</b> %{x}<br><b>Price / share:</b> %{y}<extra></extra>'
+        customdata=filtered_df[filtered_df['Action']
+                               == 'Market sell']['Total'],
+        hovertemplate='<b>Ticker:</b> %{text}<br>'
+        '<b>Date:</b> %{x}<br>'
+        '<b>Price / share:</b> %{y}<br>'
+        '<b>Total:</b> %{customdata}<extra></extra>'
     )
     layout = go.Layout(
         title='Price/Share with Market Actions and Stock Prices',
