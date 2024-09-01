@@ -1,3 +1,4 @@
+from datetime import datetime
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
@@ -141,29 +142,46 @@ def get_color_by_value(value, minValue, maxValue, colormap, num_bins=-1):
     return colormap(bins[bin_index])
 
 
-def getStockPrice(df):
-    df_ticker_date = df.groupby('Ticker').agg({
-        'Transaction Date': ['min', 'max']
-    })
-    minDateDict = df_ticker_date['Transaction Date'].to_dict()['min']
-    maxDateDict = df_ticker_date['Transaction Date'].to_dict()['max']
-    tickerDate = {}
-    for ticker in df_ticker_date.index:
-        min_date = minDateDict[ticker]
-        max_date = maxDateDict[ticker]
+def getStockPrice(df: pd.DataFrame):    
+    # sort df by transaction date
+    df_sorted = df.sort_values(by='Transaction Date', inplace=False)
+    df_ticker_map = {}  # {'ticker': {minDate: , maxDate:, shares: }}
+    for _, row in df_sorted.iterrows():
+        if row['Action'] not in ['Market buy', 'Market sell']:
+            continue
+        shares = row['No. of shares'] if row['Action'] == 'Market buy' else - \
+            row['No. of shares']
+        if row['Ticker'] not in df_ticker_map:
+            df_ticker_map[row['Ticker']] = {
+                'minDate': row['Transaction Date'],
+                'maxDate': row['Transaction Date'],
+                'shares': shares
+            }
+        else:
+            df_ticker_map[row['Ticker']]['maxDate'] = row['Transaction Date']
+            df_ticker_map[row['Ticker']]['shares'] += shares
+
+    # Update maxDate to today's date if shares equal zero
+    for ticker, data in df_ticker_map.items():
+        if data['shares'] == 0:
+            data['maxDate'] = pd.Timestamp(datetime.now().date())
+    
+    stockPrice = {}
+    for ticker in df_ticker_map.keys():
+        min_date = df_ticker_map[ticker]['minDate']
+        max_date = df_ticker_map[ticker]['maxDate']
         price_data, error = get_50_day_moving_average(
             ticker, min_date.strftime("%Y-%m-%d"), max_date.strftime("%Y-%m-%d"))
         if error:
             print(error)
         else:
-            tickerDate[ticker] = {
+            stockPrice[ticker] = {
                 'min': min_date,
                 'max': max_date,
                 'price': price_data
             }
-    print(tickerDate['INTU']['max'])
-    print(tickerDate['INTU']['price'])
-    return tickerDate
+
+    return stockPrice
 
 
 def addROIStockPrice(stockPrice, df_meta):
@@ -283,7 +301,8 @@ app.layout = html.Div([
                     {'label': 'Market Sell', 'value': 'market_sell'},
                     {'label': 'Dividend', 'value': 'dividend'}
                 ],
-                value=['market_buy', 'market_sell', 'dividend'],  # Default value, no items checked
+                # Default value, no items checked
+                value=['market_buy', 'market_sell', 'dividend'],
                 style={'width': '100%'}
             )
         ], style={'width': '14.28%'}),
