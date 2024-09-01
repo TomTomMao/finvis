@@ -371,7 +371,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         paper_bgcolor=bg_color,
         plot_bgcolor=bg_color,
         font=dict(color='white' if bg_color == 'black' else 'black'),
-        
+        uirevision='constant'        
     )
 
     # Create the figure and add traces
