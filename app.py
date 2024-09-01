@@ -200,7 +200,7 @@ app.layout = html.Div([
                     {'label': 'White Background', 'value': 'white'},
                     {'label': 'Black Background', 'value': 'black'}
                 ],
-                value='white',
+                value='black',
                 labelStyle={'display': 'block', 'margin-bottom': '5px'}
             )
         ], style={'width': '16.6%'}),
