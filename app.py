@@ -192,7 +192,7 @@ def addROIStockPrice(stockPrice, df_meta):
                        ]['ROI'] = row['ROI']
 
 
-df = pd.read_csv('2020-2024.csv')
+df = pd.read_csv('2020-2024-split.csv')
 df_meta = pd.read_csv('company meta 2020-2024.csv')
 # Convert 'Transaction Date' to datetime
 df['Transaction Date'] = pd.to_datetime(
@@ -340,7 +340,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
     print('maxTotal=', maxTotal)
     size_mapper = SizeMapper(range=(minTotal, maxTotal), scale=(
         MIN_MARKER_SIZE, MAX_MARKER_SIZE), log=False)
-    df['Marker Size'] = df['Total'].apply(size_mapper)
+    df['Total($)'] = df['No. of shares']*df['Price / share']
+    df['Marker Size'] = df['Total($)'].apply(size_mapper)
     df.to_csv('df.csv')  # save for debug
     # Filter the data by ROI
     if roi_filter in ['positive', 'negative']:
@@ -368,7 +369,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
             line=dict(width=0)
         ),
         text=filtered_df[filtered_df['Action'] == 'Market buy']['Ticker'],
-        customdata=filtered_df[filtered_df['Action'] == 'Market buy']['Total'],
+        customdata=filtered_df[filtered_df['Action'] == 'Market buy']['Total($)'],
         hovertemplate='<b>Buy</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y}<br>'
@@ -391,7 +392,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         ),
         text=filtered_df[filtered_df['Action'] == 'Market sell']['Ticker'],
         customdata=filtered_df[filtered_df['Action']
-                               == 'Market sell']['Total'],
+                               == 'Market sell']['Total($)'],
         hovertemplate='<b>Sell</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y}<br>'
@@ -412,7 +413,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
             line=dict(width=0)
         ),
         text=dividend_df['Ticker'],
-        customdata=dividend_df['Total'],
+        customdata=dividend_df['Total($)'],
         hovertemplate='<b>Dividend</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y}<br>'
