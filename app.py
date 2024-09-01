@@ -203,7 +203,7 @@ app.layout = html.Div([
                 value='black',
                 labelStyle={'display': 'block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '16.6%'}),
+        ], style={'width': '14.28%'}),
         html.Div([
             html.Label('ROI Filter:'),
             dcc.RadioItems(
@@ -216,7 +216,7 @@ app.layout = html.Div([
                 value='all',
                 labelStyle={'display': 'block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '16.6%'}),
+        ], style={'width': '14.28%'}),
         html.Div([
             html.Label('Moving Average:'),
             dcc.Checklist(
@@ -227,7 +227,7 @@ app.layout = html.Div([
                 value=[],
                 style={'width': '100%'}
             )
-        ], style={'width': '16.6%'}),
+        ], style={'width': '14.28%'}),
 
         html.Div([
             html.Label('Color Map Type:'),
@@ -240,7 +240,7 @@ app.layout = html.Div([
                 value='discrete',
                 labelStyle={'display': 'block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '16.6%'}),
+        ], style={'width': '14.28%'}),
 
         html.Div([
             html.Label('Y-axis Maximum Value:'),
@@ -251,7 +251,7 @@ app.layout = html.Div([
                 step=50,
                 style={'width': '50px'}
             )
-        ], style={'width': '16.6%'}),
+        ], style={'width': '14.28%'}),
         html.Div([
             html.Label('Line Width:'),
             dcc.Input(
@@ -272,7 +272,22 @@ app.layout = html.Div([
                 )
             ], style={'margin-top': '10px'})
 
-        ], style={'width': '16.6%'})
+        ], style={'width': '14.28%'}),
+        
+        html.Div([
+            html.Label('Show Data:'),
+            dcc.Checklist(
+                id='show_data',
+                options=[
+                    {'label': 'Market Buy', 'value': 'market_buy'},
+                    {'label': 'Market Sell', 'value': 'market_sell'},
+                    {'label': 'Dividend', 'value': 'dividend'}
+                ],
+                value=[],  # Default value, no items checked
+                style={'width': '100%'}
+            )
+        ], style={'width': '14.28%'}),
+
     ], style={'display': 'flex', 'justify-content': 'space-between', 'flex-wrap': 'wrap'}),
 
     # Second row for the chart
@@ -290,10 +305,11 @@ app.layout = html.Div([
      Input('default_y_max', 'value'),
      Input('line_width', 'value'),
      Input('roi-filter', 'value'),
-     Input('shading', 'value')
+     Input('shading', 'value'),
+     Input('show_data', 'value')
      ]
 )
-def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter, shading):
+def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter, shading, show_data):
     # Create the layout with the selected background color
 
     # add marker size based on the min and max value for the market buy and sell action
@@ -438,9 +454,10 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
                 f"<b>ROI:</b> {ROI:.2f}<extra></extra>"
             ))
 
-    fig.add_trace(buy_trace)
-    fig.add_trace(sell_trace)
-    fig.add_trace(dividend_trace)
+
+    if 'market_buy' in show_data: fig.add_trace(buy_trace)
+    if 'market_sell' in show_data: fig.add_trace(sell_trace)
+    if 'dividend' in show_data: fig.add_trace(dividend_trace)
 
     dummy_trace_continuous, dummy_trace_discrete = get_dummy_trace(
         colormap, minROI, maxROI)
