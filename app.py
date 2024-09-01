@@ -160,10 +160,9 @@ def getStockPrice(df: pd.DataFrame):
         else:
             df_ticker_map[row['Ticker']]['maxDate'] = row['Transaction Date']
             df_ticker_map[row['Ticker']]['shares'] += shares
-
     # Update maxDate to today's date if shares equal zero
     for ticker, data in df_ticker_map.items():
-        if data['shares'] == 0:
+        if data['shares'] != 0:
             data['maxDate'] = pd.Timestamp(datetime.now().date())
     
     stockPrice = {}
