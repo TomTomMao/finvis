@@ -354,48 +354,46 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
     filtered_df = df[df['Ticker'].isin(roi_dict.keys())]
 
     # Create traces for each action type
+    buy_df = filtered_df[filtered_df['Action'] == 'Market buy']
     buy_trace = go.Scatter(
-        x=filtered_df[filtered_df['Action'] ==
-                      'Market buy']['Transaction Date'],
-        y=filtered_df[filtered_df['Action'] == 'Market buy']['Price / share'],
+        x=buy_df['Transaction Date'],
+        y=buy_df['Price / share'],
         mode='markers',
         name='Market buy',
         marker=dict(
             color='green',
             symbol='triangle-right',
-            size=filtered_df[filtered_df['Action']
-                             == 'Market buy']['Marker Size'],
+            size=buy_df['Marker Size'],
             line=dict(width=0)
         ),
-        text=filtered_df[filtered_df['Action'] == 'Market buy']['Ticker'],
-        customdata=filtered_df[filtered_df['Action'] == 'Market buy']['Total($)'],
+        text=buy_df['Ticker'],
+        customdata=list(zip(buy_df['No. of shares'], buy_df['Total($)'])),  # Combine 'Total($)' and 'No. of shares' into customdata
         hovertemplate='<b>Buy</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
-        '<b>Price / share:</b> %{y}<br>'
-        '<b>Total:</b> %{customdata}<extra></extra>'
+        '<b>Price / share:</b> %{y} ($)<br>'
+        '<b>No. of shares:</b> %{customdata[0]}<br>'
+        '<b>Total:</b> %{customdata[1]} ($)<extra></extra>'
 
     )
-
+    sell_df = filtered_df[filtered_df['Action'] == 'Market sell']
     sell_trace = go.Scatter(
-        x=filtered_df[filtered_df['Action'] ==
-                      'Market sell']['Transaction Date'],
-        y=filtered_df[filtered_df['Action'] == 'Market sell']['Price / share'],
+        x=sell_df['Transaction Date'],
+        y=sell_df['Price / share'],
         mode='markers',
         name='Market sell',
         marker=dict(
             color='red',
             symbol='square',
-            size=filtered_df[filtered_df['Action']
-                             == 'Market sell']['Marker Size'],
+            size=sell_df['Marker Size'],
             line=dict(width=0)
         ),
-        text=filtered_df[filtered_df['Action'] == 'Market sell']['Ticker'],
-        customdata=filtered_df[filtered_df['Action']
-                               == 'Market sell']['Total($)'],
+        text=sell_df['Ticker'],
+        customdata=list(zip(sell_df['No. of shares'], sell_df['Total($)'])),  # Combine 'Total($)' and 'No. of shares' into customdata
         hovertemplate='<b>Sell</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
-        '<b>Price / share:</b> %{y}<br>'
-        '<b>Total:</b> %{customdata}<extra></extra>'
+        '<b>Price / share:</b> %{y} ($)<br>'
+        '<b>No. of shares:</b> %{customdata[0]}<br>'
+        '<b>Total:</b> %{customdata[1]}<extra> ($)</extra>'
     )
 
     dividend_df = filtered_df[(filtered_df['Action'] ==
@@ -412,11 +410,12 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
             line=dict(width=0)
         ),
         text=dividend_df['Ticker'],
-        customdata=dividend_df['Total($)'],
+        customdata=list(zip(dividend_df['No. of shares'], dividend_df['Total($)'])),  # Combine 'Total($)' and 'No. of shares' into customdata
         hovertemplate='<b>Dividend</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
-        '<b>Price / share:</b> %{y}<br>'
-        '<b>Total:</b> %{customdata}<extra></extra>'
+        '<b>Price / share:</b> %{y} ($)<br>'
+        '<b>No. of shares:</b> %{customdata[0]}<br>'
+        '<b>Total:</b> %{customdata[1]}<extra> ($)</extra>'
     )
 
     lineColor = 'white' if bg_color == 'black' else 'black'
