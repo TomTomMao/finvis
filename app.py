@@ -273,7 +273,7 @@ app.layout = html.Div([
             ], style={'margin-top': '10px'})
 
         ], style={'width': '14.28%'}),
-        
+
         html.Div([
             html.Label('Show Data:'),
             dcc.Checklist(
@@ -314,9 +314,9 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     # add marker size based on the min and max value for the market buy and sell action
     minTotal = df[(df['Action'] ==
-                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)')]['Total'].min()
+                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Return of capital non us)')]['Total'].min()
     maxTotal = df[(df['Action'] ==
-                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)')]['Total'].max()
+                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Return of capital non us)')]['Total'].max()
     print('minTotal=', minTotal)
     print('maxTotal=', maxTotal)
     size_mapper = SizeMapper(range=(minTotal, maxTotal), scale=(
@@ -378,39 +378,39 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         '<b>Price / share:</b> %{y}<br>'
         '<b>Total:</b> %{customdata}<extra></extra>'
     )
-    
+
+    dividend_df = filtered_df[(filtered_df['Action'] ==
+                               'Dividend (Ordinary)') | (filtered_df['Action'] == 'Dividend (Return of capital non us)')]
     dividend_trace = go.Scatter(
-        x=filtered_df[filtered_df['Action'] ==
-                      'Dividend (Ordinary)']['Transaction Date'],
-        y=filtered_df[filtered_df['Action'] == 'Dividend (Ordinary)']['Price / share'],
+        x=dividend_df['Transaction Date'],
+        y=dividend_df['Price / share'],
         mode='markers',
-        name='Dividend (Ordinary)',
+        name='Dividend',
         marker=dict(
             color='orange',
             symbol='cross',
-            size=filtered_df[filtered_df['Action']
-                             == 'Dividend (Ordinary)']['Marker Size'],
+            size=dividend_df['Marker Size'],
             line=dict(width=0)
         ),
-        text=filtered_df[filtered_df['Action'] == 'Dividend (Ordinary)']['Ticker'],
-        customdata=filtered_df[filtered_df['Action']
-                               == 'Dividend (Ordinary)']['Total'],
-        hovertemplate='<b>Dividend (Ordinary)</b></br><b>Ticker:</b> %{text}<br>'
+        text=dividend_df['Ticker'],
+        customdata=dividend_df['Total'],
+        hovertemplate='<b>Dividend</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y}<br>'
         '<b>Total:</b> %{customdata}<extra></extra>'
     )
-    
-    lineColor ='white' if bg_color == 'black' else 'black'
+
+    lineColor = 'white' if bg_color == 'black' else 'black'
     layout = go.Layout(
         title='Price/Share with Market Actions and Stock Prices',
-        xaxis=dict(title='Date', gridcolor=lineColor, zerolinecolor=lineColor), 
-        yaxis=dict(title='Price', range=(0, default_y_max), gridcolor=lineColor, zerolinecolor=lineColor),
+        xaxis=dict(title='Date', gridcolor=lineColor, zerolinecolor=lineColor),
+        yaxis=dict(title='Price', range=(0, default_y_max),
+                   gridcolor=lineColor, zerolinecolor=lineColor),
         height=800,
         paper_bgcolor=bg_color,
         plot_bgcolor=bg_color,
         font=dict(color='white' if bg_color == 'black' else 'black'),
-        uirevision='constant'        
+        uirevision='constant'
     )
 
     # Create the figure and add traces
@@ -443,7 +443,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
                     color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=line_width),
                 fill='tozeroy' if 'shading' in shading else 'none',
                 fillgradient=dict(
-                    colorscale=[[0, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0.5)'], [1, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0)']],
+                    colorscale=[[0, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0.5)'], [
+                        1, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0)']],
                     type='vertical',  # Gradient orientation
                     start=max(price),  # Gradient start position
                     stop=0  # Gradient stop position
@@ -454,16 +455,18 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
                 f"<b>ROI:</b> {ROI:.2f}<extra></extra>"
             ))
 
-
-    if 'market_buy' in show_data: fig.add_trace(buy_trace)
-    if 'market_sell' in show_data: fig.add_trace(sell_trace)
-    if 'dividend' in show_data: fig.add_trace(dividend_trace)
+    if 'market_buy' in show_data:
+        fig.add_trace(buy_trace)
+    if 'market_sell' in show_data:
+        fig.add_trace(sell_trace)
+    if 'dividend' in show_data:
+        fig.add_trace(dividend_trace)
 
     dummy_trace_continuous, dummy_trace_discrete = get_dummy_trace(
         colormap, minROI, maxROI)
-    dummy_trace_continuous.update(showlegend=False)  # Hide legend for this trace
+    # Hide legend for this trace
+    dummy_trace_continuous.update(showlegend=False)
     dummy_trace_discrete.update(showlegend=False)  # Hide legend for this trace
-
 
     if discrete_colormap == 'continuous':
         fig.add_trace(dummy_trace_continuous)
