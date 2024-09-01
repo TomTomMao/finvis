@@ -267,7 +267,7 @@ app.layout = html.Div([
                     options=[{
                         'label': 'shading', 'value': 'shading'
                     }],
-                    value=[],
+                    value=['shading'],
                     style={'width': '100%'}
                 )
             ], style={'margin-top': '10px'})
