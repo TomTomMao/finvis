@@ -306,7 +306,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
     size_mapper = SizeMapper(range=(minTotal, maxTotal), scale=(
         MIN_MARKER_SIZE, MAX_MARKER_SIZE), log=False)
     df['Marker Size'] = df['Total'].apply(size_mapper)
-    df.to_csv('df.csv')
+    df.to_csv('df.csv')  # save for debug
     # Filter the data by ROI
     if roi_filter in ['positive', 'negative']:
         def condition(
@@ -334,7 +334,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         ),
         text=filtered_df[filtered_df['Action'] == 'Market buy']['Ticker'],
         customdata=filtered_df[filtered_df['Action'] == 'Market buy']['Total'],
-        hovertemplate='<b>Ticker:</b> %{text}<br>'
+        hovertemplate='<b>Buy</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y}<br>'
         '<b>Total:</b> %{customdata}<extra></extra>'
@@ -343,7 +343,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     sell_trace = go.Scatter(
         x=filtered_df[filtered_df['Action'] ==
-                      'Market sell']['Transaction Date'],
+                      'Sell']['Transaction Date'],
         y=filtered_df[filtered_df['Action'] == 'Market sell']['Price / share'],
         mode='markers',
         name='Market sell',
@@ -357,7 +357,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         text=filtered_df[filtered_df['Action'] == 'Market sell']['Ticker'],
         customdata=filtered_df[filtered_df['Action']
                                == 'Market sell']['Total'],
-        hovertemplate='<b>Ticker:</b> %{text}<br>'
+        hovertemplate='<b>Market Sell</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y}<br>'
         '<b>Total:</b> %{customdata}<extra></extra>'
