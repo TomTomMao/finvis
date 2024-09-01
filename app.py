@@ -332,11 +332,11 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     # add marker size based on the min and max value for the market buy and sell action
     minTotal = df[(df['Action'] ==
-                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Return of capital non us)')]['Total'].min()
+                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Return of capital non us)')]['Total($)'].min()
     maxTotal = df[(df['Action'] ==
-                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Return of capital non us)')]['Total'].max()
-    print('minTotal=', minTotal)
-    print('maxTotal=', maxTotal)
+                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Return of capital non us)')]['Total($)'].max()
+    print('minTotal=', minTotal, '($)')
+    print('maxTotal=', maxTotal, '($)')
     size_mapper = SizeMapper(range=(minTotal, maxTotal), scale=(
         MIN_MARKER_SIZE, MAX_MARKER_SIZE), log=False)
     df['Total($)'] = df['No. of shares']*df['Price / share']
