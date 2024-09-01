@@ -283,7 +283,7 @@ app.layout = html.Div([
                     {'label': 'Market Sell', 'value': 'market_sell'},
                     {'label': 'Dividend', 'value': 'dividend'}
                 ],
-                value=[],  # Default value, no items checked
+                value=['market_buy', 'market_sell', 'dividend'],  # Default value, no items checked
                 style={'width': '100%'}
             )
         ], style={'width': '14.28%'}),
