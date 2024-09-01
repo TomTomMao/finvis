@@ -362,14 +362,16 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         '<b>Price / share:</b> %{y}<br>'
         '<b>Total:</b> %{customdata}<extra></extra>'
     )
+    lineColor ='white' if bg_color == 'black' else 'black'
     layout = go.Layout(
         title='Price/Share with Market Actions and Stock Prices',
-        xaxis=dict(title='Date'),
-        yaxis=dict(title='Price', range=(0, default_y_max)),
+        xaxis=dict(title='Date', gridcolor=lineColor, zerolinecolor=lineColor), 
+        yaxis=dict(title='Price', range=(0, default_y_max), gridcolor=lineColor, zerolinecolor=lineColor),
         height=800,
         paper_bgcolor=bg_color,
         plot_bgcolor=bg_color,
-        font=dict(color='white' if bg_color == 'black' else 'black')
+        font=dict(color='white' if bg_color == 'black' else 'black'),
+        
     )
 
     # Create the figure and add traces
