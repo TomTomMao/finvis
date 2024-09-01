@@ -298,9 +298,9 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     # add marker size based on the min and max value for the market buy and sell action
     minTotal = df[(df['Action'] ==
-                  'Market buy') | (df['Action'] == 'Market sell')]['Total'].min()
+                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)')]['Total'].min()
     maxTotal = df[(df['Action'] ==
-                  'Market buy') | (df['Action'] == 'Market sell')]['Total'].max()
+                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)')]['Total'].max()
     print('minTotal=', minTotal)
     print('maxTotal=', maxTotal)
     size_mapper = SizeMapper(range=(minTotal, maxTotal), scale=(
@@ -362,6 +362,29 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         '<b>Price / share:</b> %{y}<br>'
         '<b>Total:</b> %{customdata}<extra></extra>'
     )
+    
+    dividend_trace = go.Scatter(
+        x=filtered_df[filtered_df['Action'] ==
+                      'Dividend (Ordinary)']['Transaction Date'],
+        y=filtered_df[filtered_df['Action'] == 'Dividend (Ordinary)']['Price / share'],
+        mode='markers',
+        name='Dividend (Ordinary)',
+        marker=dict(
+            color='orange',
+            symbol='cross',
+            size=filtered_df[filtered_df['Action']
+                             == 'Dividend (Ordinary)']['Marker Size'],
+            line=dict(width=0)
+        ),
+        text=filtered_df[filtered_df['Action'] == 'Dividend (Ordinary)']['Ticker'],
+        customdata=filtered_df[filtered_df['Action']
+                               == 'Dividend (Ordinary)']['Total'],
+        hovertemplate='<b>Dividend (Ordinary)</b></br><b>Ticker:</b> %{text}<br>'
+        '<b>Date:</b> %{x}<br>'
+        '<b>Price / share:</b> %{y}<br>'
+        '<b>Total:</b> %{customdata}<extra></extra>'
+    )
+    
     lineColor ='white' if bg_color == 'black' else 'black'
     layout = go.Layout(
         title='Price/Share with Market Actions and Stock Prices',
@@ -417,6 +440,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     fig.add_trace(buy_trace)
     fig.add_trace(sell_trace)
+    fig.add_trace(dividend_trace)
 
     dummy_trace_continuous, dummy_trace_discrete = get_dummy_trace(
         colormap, minROI, maxROI)
