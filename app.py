@@ -327,7 +327,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         name='Market buy',
         marker=dict(
             color='green',
-            symbol='triangle-up',
+            symbol='triangle-right',
             size=filtered_df[filtered_df['Action']
                              == 'Market buy']['Marker Size'],
             line=dict(width=0)
@@ -343,21 +343,21 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     sell_trace = go.Scatter(
         x=filtered_df[filtered_df['Action'] ==
-                      'Sell']['Transaction Date'],
+                      'Market sell']['Transaction Date'],
         y=filtered_df[filtered_df['Action'] == 'Market sell']['Price / share'],
         mode='markers',
         name='Market sell',
         marker=dict(
             color='red',
-            symbol='triangle-down',
+            symbol='square',
             size=filtered_df[filtered_df['Action']
-                             == 'Market buy']['Marker Size'],
+                             == 'Market sell']['Marker Size'],
             line=dict(width=0)
         ),
         text=filtered_df[filtered_df['Action'] == 'Market sell']['Ticker'],
         customdata=filtered_df[filtered_df['Action']
                                == 'Market sell']['Total'],
-        hovertemplate='<b>Market Sell</b></br><b>Ticker:</b> %{text}<br>'
+        hovertemplate='<b>Sell</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y}<br>'
         '<b>Total:</b> %{customdata}<extra></extra>'
