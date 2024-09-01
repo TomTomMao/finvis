@@ -444,6 +444,9 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     dummy_trace_continuous, dummy_trace_discrete = get_dummy_trace(
         colormap, minROI, maxROI)
+    dummy_trace_continuous.update(showlegend=False)  # Hide legend for this trace
+    dummy_trace_discrete.update(showlegend=False)  # Hide legend for this trace
+
 
     if discrete_colormap == 'continuous':
         fig.add_trace(dummy_trace_continuous)
