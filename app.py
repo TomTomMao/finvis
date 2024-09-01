@@ -391,6 +391,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         color = get_color_by_value(ROI,
                                    minROI, maxROI, colormap,
                                    -1 if discrete_colormap == 'continuous' else NUM_COLOR_BIN)
+
         if ticker in roi_dict:
             fig.add_trace(go.Scatter(
                 x=date,
@@ -400,8 +401,12 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
                 line=dict(
                     color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=line_width),
                 fill='tozeroy' if 'shading' in shading else 'none',
-                fillcolor=f'rgba({color[0]*255}, {color[1]
-                                                  * 255}, {color[2]*255}, {SHADING_OPACITY})',
+                fillgradient=dict(
+                    colorscale=[[0, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0.5)'], [1, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0)']],
+                    type='vertical',  # Gradient orientation
+                    start=max(price),  # Gradient start position
+                    stop=0  # Gradient stop position
+                ),
                 hovertemplate=f"<b>Ticker:</b> {ticker}<br>"
                 f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
                 f"<b>Price / share:</b> %{{y:.2f}}<br>"
