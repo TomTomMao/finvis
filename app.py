@@ -422,7 +422,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
     layout = go.Layout(
         title='Price/Share with Market Actions and Stock Prices',
         xaxis=dict(title='Date', gridcolor=lineColor, zerolinecolor=lineColor),
-        yaxis=dict(title='Price', range=(0, default_y_max),
+        yaxis=dict(title='Price (USD)', range=(0, default_y_max),
                    gridcolor=lineColor, zerolinecolor=lineColor),
         height=800,
         paper_bgcolor=bg_color,
