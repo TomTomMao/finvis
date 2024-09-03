@@ -162,9 +162,11 @@ def getStockPrice(df: pd.DataFrame):
             df_ticker_map[row['Ticker']]['shares'] += shares
     # Update maxDate to today's date if shares equal zero
     for ticker, data in df_ticker_map.items():
-        if data['shares'] != 0:
+        if data['shares'] > 0:
             data['maxDate'] = pd.Timestamp(datetime.now().date())
-    
+            if ticker not in ['AAPL', 'AMAT', 'AMT', 'AMZN', 'AVGO', 'BKNG', 'CAT', 'COST', 'CRM', 'GOOGL', 'HD', 'HRZN', 'INTU', 'MA', 'MCO', 'NNN', 'O', 'SPG', 'SPGI', 'UNH', 'V', 'VICI']:
+                print(ticker)
+                print(df_ticker_map[ticker])
     stockPrice = {}
     for ticker in df_ticker_map.keys():
         min_date = df_ticker_map[ticker]['minDate']
@@ -190,9 +192,18 @@ def addROIStockPrice(stockPrice, df_meta):
             stockPrice[row['Ticker Symbol']
                        ]['ROI'] = row['ROI']
 
+def getAveragePriceOuter(df_meta: pd.DataFrame):
+    ticker_average_price_map = {}
+    for _, row in df_meta.iterrows():
+        ticker_average_price_map[row['Ticker Symbol']] = row['Average Price per Share']
+    def getAveragePriceInner(ticker):
+        assert type(ticker_average_price_map[ticker]) == float, f"ticker: {ticker}, {ticker_average_price_map[ticker]}, type: {type(ticker_average_price_map[ticker])}"
+        return ticker_average_price_map[ticker]
+    return getAveragePriceInner
 
 df = pd.read_csv('2020-2024-split.csv')
 df_meta = pd.read_csv('company meta 2020-2024.csv')
+getAveragePrice = getAveragePriceOuter(df_meta)
 # Convert 'Transaction Date' to datetime
 df['Transaction Date'] = pd.to_datetime(
     df['Transaction Date'], format='%Y/%m/%d')
@@ -332,10 +343,10 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     # add marker size based on the min and max value for the market buy and sell action
     df['Total($)'] = df['No. of shares']*df['Price / share']
-    minTotal = df[(df['Action'] ==
-                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Return of capital non us)')]['Total($)'].min()
-    maxTotal = df[(df['Action'] ==
-                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Return of capital non us)')]['Total($)'].max()
+    df_sell_buy_dividend = df[(df['Action'] ==
+                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Return of capital non us)')]
+    minTotal = df_sell_buy_dividend['Total($)'].min()
+    maxTotal = df_sell_buy_dividend['Total($)'].max()
     print('minTotal=', minTotal, '($)')
     print('maxTotal=', maxTotal, '($)')
     size_mapper = SizeMapper(range=(minTotal, maxTotal), scale=(
@@ -376,13 +387,14 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     )
     sell_df = filtered_df[filtered_df['Action'] == 'Market sell']
+    sell_df['color'] = sell_df.apply(lambda row: 'red' if row['Price / share'] < getAveragePrice(row['Ticker']) else 'green', axis=1)
     sell_trace = go.Scatter(
         x=sell_df['Transaction Date'],
         y=sell_df['Price / share'],
         mode='markers',
         name='Market sell',
         marker=dict(
-            color='red',
+            color=sell_df['color'],
             symbol='square',
             size=sell_df['Marker Size'],
             line=dict(width=0)
