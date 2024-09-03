@@ -201,6 +201,35 @@ def getAveragePriceOuter(df_meta: pd.DataFrame):
         return ticker_average_price_map[ticker]
     return getAveragePriceInner
 
+def addStockPriceForDividend(stocksPrice, dividend_df):
+    # Function to get stock price and 50-day moving average for a given row
+    def get_price_and_moving_avg(row):
+        ticker = row['Ticker']
+        date = row['Transaction Date']
+
+        # Check if the ticker is in the stocksPrice dictionary
+        if ticker in stocksPrice:
+            price_data = stocksPrice[ticker]['price']
+
+            # Find the stock price on the dividend date
+            if date in price_data.index:
+                stock_price_on_date = price_data.loc[date, 'Close']
+                moving_average_50 = price_data.loc[date, '50_day_MA']
+            else:
+                # If the exact date is not found, set as NaN
+                stock_price_on_date = np.nan
+                moving_average_50 = np.nan
+        else:
+            stock_price_on_date = np.nan
+            moving_average_50 = np.nan
+        
+        return pd.Series([stock_price_on_date, moving_average_50])
+
+    # Apply the function to each row and assign new columns to dividend_df
+    dividend_df[['Stock Price on Date', '50-Day Moving Average']] = dividend_df.apply(get_price_and_moving_avg, axis=1)
+    
+    return dividend_df    
+
 df = pd.read_csv('2020-2024-split.csv')
 df_meta = pd.read_csv('company meta 2020-2024.csv')
 getAveragePrice = getAveragePriceOuter(df_meta)
@@ -410,9 +439,10 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     dividend_df = filtered_df[(filtered_df['Action'] ==
                                'Dividend (Ordinary)') | (filtered_df['Action'] == 'Dividend (Return of capital non us)')]
+    addStockPriceForDividend(stocksPrice, dividend_df)
     dividend_trace = go.Scatter(
         x=dividend_df['Transaction Date'],
-        y=dividend_df['Price / share'],
+        y=dividend_df['50-Day Moving Average' if '50_day_MA' in moving_average else 'Stock Price on Date'],
         mode='markers',
         name='Dividend',
         marker=dict(
@@ -422,12 +452,13 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
             line=dict(width=0)
         ),
         text=dividend_df['Ticker'],
-        customdata=list(zip(dividend_df['No. of shares'], dividend_df['Total($)'])),  # Combine 'Total($)' and 'No. of shares' into customdata
+        customdata=list(zip(dividend_df['No. of shares'], dividend_df['Total($)'], dividend_df['Price / share'])),  # Combine 'Total($)' and 'No. of shares' into customdata
         hovertemplate='<b>Dividend</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
-        '<b>Price / share:</b> %{y} ($)<br>'
+        '<b>Stock Price / share:</b> %{y} ($)<br>'
+        '<b>Dividend Price / share:</b> %{customdata[2]} ($)<br>'
         '<b>No. of shares:</b> %{customdata[0]}<br>'
-        '<b>Total:</b> %{customdata[1]}<extra> ($)</extra>'
+        '<b>Total:</b> %{customdata[1]} ($)<extra></extra>'
     )
 
     lineColor = 'white' if bg_color == 'black' else 'black'
