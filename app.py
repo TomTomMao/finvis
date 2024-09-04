@@ -476,8 +476,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         text=dividend_df['Ticker'],
         # Combine 'Total($)' and 'No. of shares' into customdata
         customdata=list(zip(
-            dividend_df['No. of shares'], dividend_df['Total($)'], dividend_df['Price / share'])),
-        hovertemplate='<b>Dividend</b></br><b>Ticker:</b> %{text}<br>'
+            dividend_df['No. of shares'], dividend_df['Total($)'], dividend_df['Price / share'], dividend_df['Action'])),
+        hovertemplate='<b>%{customdata[3]}</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Stock Price / share:</b> %{y} ($)<br>'
         '<b>Dividend Price / share:</b> %{customdata[2]} ($)<br>'
