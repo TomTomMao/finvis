@@ -142,7 +142,7 @@ def get_color_by_value(value, minValue, maxValue, colormap, num_bins=-1):
     return colormap(bins[bin_index])
 
 
-def getStockPrice(df: pd.DataFrame):    
+def getStockPrice(df: pd.DataFrame):
     # sort df by transaction date
     df_sorted = df.sort_values(by='Transaction Date', inplace=False)
     df_ticker_map = {}  # {'ticker': {minDate: , maxDate:, shares: }}
@@ -192,14 +192,19 @@ def addROIStockPrice(stockPrice, df_meta):
             stockPrice[row['Ticker Symbol']
                        ]['ROI'] = row['ROI']
 
+
 def getAveragePriceOuter(df_meta: pd.DataFrame):
     ticker_average_price_map = {}
     for _, row in df_meta.iterrows():
-        ticker_average_price_map[row['Ticker Symbol']] = row['Average Price per Share']
+        ticker_average_price_map[row['Ticker Symbol']
+                                 ] = row['Average Price per Share']
+
     def getAveragePriceInner(ticker):
-        assert type(ticker_average_price_map[ticker]) == float, f"ticker: {ticker}, {ticker_average_price_map[ticker]}, type: {type(ticker_average_price_map[ticker])}"
+        assert type(ticker_average_price_map[ticker]) == float, f"ticker: {ticker}, {
+            ticker_average_price_map[ticker]}, type: {type(ticker_average_price_map[ticker])}"
         return ticker_average_price_map[ticker]
     return getAveragePriceInner
+
 
 def addStockPriceForDividend(stocksPrice, dividend_df):
     # Function to get stock price and 50-day moving average for a given row
@@ -222,13 +227,15 @@ def addStockPriceForDividend(stocksPrice, dividend_df):
         else:
             stock_price_on_date = np.nan
             moving_average_50 = np.nan
-        
+
         return pd.Series([stock_price_on_date, moving_average_50])
 
     # Apply the function to each row and assign new columns to dividend_df
-    dividend_df[['Stock Price on Date', '50-Day Moving Average']] = dividend_df.apply(get_price_and_moving_avg, axis=1)
-    
-    return dividend_df    
+    dividend_df[['Stock Price on Date', '50-Day Moving Average']
+                ] = dividend_df.apply(get_price_and_moving_avg, axis=1)
+
+    return dividend_df
+
 
 df = pd.read_csv('2020-2024-split.csv')
 df_meta = pd.read_csv('company meta 2020-2024.csv')
@@ -372,8 +379,19 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     # add marker size based on the min and max value for the market buy and sell action
     df['Total($)'] = df['No. of shares']*df['Price / share']
-    df_sell_buy_dividend = df[(df['Action'] ==
-                  'Market buy') | (df['Action'] == 'Market sell') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Ordinary)') | (df['Action'] == 'Dividend (Return of capital non us)')]
+    # Define the list of all dividend-related actions
+    dividend_actions = [
+        'Dividend (Ordinary)',
+        'Dividend (Return of capital non us)',
+        'Dividend (Demerger)',
+        'Dividend (Bonus)',
+        'Dividend (Ordinary manufactured payment)',
+        'Dividend (Dividends paid by us corporations)',
+        'Dividend (Dividends paid by foreign corporations)',
+        'Dividend (Dividend)'
+    ]
+    sell_buy_dividend_actions = dividend_actions + ['Market sell', 'Market buy']
+    df_sell_buy_dividend = df[df['Action'].isin(sell_buy_dividend_actions)]
     minTotal = df_sell_buy_dividend['Total($)'].min()
     maxTotal = df_sell_buy_dividend['Total($)'].max()
     print('minTotal=', minTotal, '($)')
@@ -407,7 +425,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
             line=dict(width=0)
         ),
         text=buy_df['Ticker'],
-        customdata=list(zip(buy_df['No. of shares'], buy_df['Total($)'])),  # Combine 'Total($)' and 'No. of shares' into customdata
+        # Combine 'Total($)' and 'No. of shares' into customdata
+        customdata=list(zip(buy_df['No. of shares'], buy_df['Total($)'])),
         hovertemplate='<b>Buy</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y} ($)<br>'
@@ -416,8 +435,10 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     )
     sell_df = filtered_df[filtered_df['Action'] == 'Market sell']
-    sell_df['Price / share(gbp)'] = sell_df['Price / share']/sell_df['Exchange rate'].astype(float)
-    sell_df['color'] = sell_df.apply(lambda row: 'red' if row['Price / share(gbp)'] < getAveragePrice(row['Ticker']) else 'green', axis=1)
+    sell_df['Price / share(gbp)'] = sell_df['Price / share'] / \
+        sell_df['Exchange rate'].astype(float)
+    sell_df['color'] = sell_df.apply(
+        lambda row: 'red' if row['Price / share(gbp)'] < getAveragePrice(row['Ticker']) else 'green', axis=1)
     sell_trace = go.Scatter(
         x=sell_df['Transaction Date'],
         y=sell_df['Price / share'],
@@ -430,7 +451,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
             line=dict(width=0)
         ),
         text=sell_df['Ticker'],
-        customdata=list(zip(sell_df['No. of shares'], sell_df['Total($)'])),  # Combine 'Total($)' and 'No. of shares' into customdata
+        # Combine 'Total($)' and 'No. of shares' into customdata
+        customdata=list(zip(sell_df['No. of shares'], sell_df['Total($)'])),
         hovertemplate='<b>Sell</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y} ($)<br>'
@@ -438,8 +460,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         '<b>Total:</b> %{customdata[1]} ($)<extra></extra>'
     )
 
-    dividend_df = filtered_df[(filtered_df['Action'] ==
-                               'Dividend (Ordinary)') | (filtered_df['Action'] == 'Dividend (Return of capital non us)')]
+    dividend_df = filtered_df[filtered_df['Action'].isin(dividend_actions)]
     addStockPriceForDividend(stocksPrice, dividend_df)
     dividend_trace = go.Scatter(
         x=dividend_df['Transaction Date'],
@@ -453,7 +474,9 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
             line=dict(width=0)
         ),
         text=dividend_df['Ticker'],
-        customdata=list(zip(dividend_df['No. of shares'], dividend_df['Total($)'], dividend_df['Price / share'])),  # Combine 'Total($)' and 'No. of shares' into customdata
+        # Combine 'Total($)' and 'No. of shares' into customdata
+        customdata=list(zip(
+            dividend_df['No. of shares'], dividend_df['Total($)'], dividend_df['Price / share'])),
         hovertemplate='<b>Dividend</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Stock Price / share:</b> %{y} ($)<br>'
