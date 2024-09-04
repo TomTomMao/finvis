@@ -416,7 +416,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
 
     )
     sell_df = filtered_df[filtered_df['Action'] == 'Market sell']
-    sell_df['color'] = sell_df.apply(lambda row: 'red' if row['Price / share'] < getAveragePrice(row['Ticker']) else 'green', axis=1)
+    sell_df['Price / share(gbp)'] = sell_df['Price / share']/sell_df['Exchange rate'].astype(float)
+    sell_df['color'] = sell_df.apply(lambda row: 'red' if row['Price / share(gbp)'] < getAveragePrice(row['Ticker']) else 'green', axis=1)
     sell_trace = go.Scatter(
         x=sell_df['Transaction Date'],
         y=sell_df['Price / share'],
