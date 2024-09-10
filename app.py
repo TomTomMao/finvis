@@ -15,6 +15,7 @@ COLORBAR_X = 0.5
 COLORBAR_Y = -0.25
 COLORBAR_LEN = 0.75
 DEFAULT_LINE_WIDTH = 1.3
+DEFAULT_SHADING_GRADIENT = 0.5
 MIN_MARKER_SIZE = 5
 MAX_MARKER_SIZE = 40
 SHADING_OPACITY = 0.3
@@ -162,12 +163,20 @@ def getStockPrice(df: pd.DataFrame):
             df_ticker_map[row['Ticker']]['shares'] += shares
     # Update maxDate to today's date if shares equal zero
 
+    sold = []
+    hold = []
+    
     for ticker, data in df_ticker_map.items():
         if data['shares'] > 1:
             if ticker not in ['AAPL', 'AMAT', 'AMT', 'AMZN', 'AVGO', 'BKNG', 'CAT', 'COST', 'CRM', 'GOOGL', 'HD', 'HRZN', 'INTU', 'MA', 'MCO', 'NNN', 'O', 'SPG', 'SPGI', 'UNH', 'V', 'VICI']:
                 print(ticker)
                 print(df_ticker_map[ticker])
             data['maxDate'] = pd.Timestamp(datetime.now().date())
+            hold.append((ticker, data['shares']))
+        else:
+            sold.append(ticker)
+    print(len(sold),'sold:', sold)
+    print(len(hold),'hold:', hold)
     stockPrice = {}
     for ticker in df_ticker_map.keys():
         min_date = df_ticker_map[ticker]['minDate']
@@ -335,7 +344,17 @@ app.layout = html.Div([
                     value=['shading'],
                     style={'width': '100%'}
                 )
-            ], style={'margin-top': '10px'})
+            ], style={'margin-top': '10px'}),
+            html.Label('shading gradient:'),
+            dcc.Input(
+                id='shading_gradient',
+                type='number',
+                value=DEFAULT_SHADING_GRADIENT,  # Default value for the y-axis maximum
+                step=0.1,
+                min=0.1,
+                max=1,
+                style={'width': '50px'}
+            ),
 
         ], style={'width': '14.28%'}),
 
@@ -372,10 +391,11 @@ app.layout = html.Div([
      Input('line_width', 'value'),
      Input('roi-filter', 'value'),
      Input('shading', 'value'),
+     Input('shading_gradient', 'value'),
      Input('show_data', 'value')
      ]
 )
-def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter, shading, show_data):
+def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter, shading, shading_gradient, show_data):
     # Create the layout with the selected background color
 
     # add marker size based on the min and max value for the market buy and sell action
@@ -534,7 +554,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
                     color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=line_width),
                 fill='tozeroy' if 'shading' in shading else 'none',
                 fillgradient=dict(
-                    colorscale=[[0, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0.5)'], [
+                    colorscale=[[0, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, {shading_gradient})'], [
                         1, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0)']],
                     type='vertical',  # Gradient orientation
                     start=max(price),  # Gradient start position
