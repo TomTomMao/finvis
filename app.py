@@ -19,7 +19,7 @@ DEFAULT_SHADING_GRADIENT = 0.5
 MIN_MARKER_SIZE = 5
 MAX_MARKER_SIZE = 40
 SHADING_OPACITY = 0.3
-
+STOCK_NOT_SHOW = ['PBCT', 'LVGO', 'STOR', 'SBNY', 'WORK']
 
 class SizeMapper:
     def __init__(self, range, scale=(0, 10), log=False):
@@ -181,6 +181,8 @@ def getStockPrice(df: pd.DataFrame):
     for ticker in df_ticker_map.keys():
         min_date = df_ticker_map[ticker]['minDate']
         max_date = df_ticker_map[ticker]['maxDate']
+        if ticker in STOCK_NOT_SHOW:
+            continue
         price_data, error = get_50_day_moving_average(
             ticker, min_date.strftime("%Y-%m-%d"), max_date.strftime("%Y-%m-%d"))
         if error:
