@@ -250,6 +250,10 @@ def addStockPriceForDividend(stocksPrice, dividend_df):
 
 df = pd.read_csv('2020-2024-split.csv')
 df_meta = pd.read_csv('company meta 2020-2024.csv')
+# replace CWEN/A with CWEA
+df_meta = df_meta.replace({'CWEN/A': 'CWEN'})
+df = df.replace({'CWEN/A': 'CWEN'})
+
 getAveragePrice = getAveragePriceOuter(df_meta)
 # Convert 'Transaction Date' to datetime
 df['Transaction Date'] = pd.to_datetime(
