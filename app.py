@@ -431,9 +431,9 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         customdata=list(zip(buy_df['No. of shares'], buy_df['Total($)'])),
         hovertemplate='<b>Buy</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
-        '<b>Price / share:</b> %{y} ($)<br>'
-        '<b>No. of shares:</b> %{customdata[0]}<br>'
-        '<b>Total:</b> %{customdata[1]} ($)<extra></extra>'
+        '<b>Price / share:</b> %{y:.2f} ($)<br>'
+        '<b>No. of shares:</b> %{customdata[0]:.2f}<br>'
+        '<b>Total:</b> %{customdata[1]:.2f} ($)<extra></extra>'
 
     )
     sell_df = filtered_df[filtered_df['Action'] == 'Market sell']
@@ -460,10 +460,10 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         customdata=list(zip(sell_df['No. of shares'], sell_df['Total($)'], sell_df['Price Difference'])),
         hovertemplate='<b>Sell</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
-        '<b>Price / share:</b> %{y} ($)<br>'
-        '<b>No. of shares:</b> %{customdata[0]}<br>'
-        '<b>Price difference:</b> %{customdata[2]} ($)<br>'
-        '<b>Total:</b> %{customdata[1]} ($)<extra></extra>'
+        '<b>Price / share:</b> %{y:.2f} ($)<br>'
+        '<b>No. of shares:</b> %{customdata[0]:.2f}<br>'
+        '<b>Price difference:</b> %{customdata[2]:.2f} ($)<br>'
+        '<b>Total:</b> %{customdata[1]:.2f} ($)<extra></extra>'
     )
 
     dividend_df = filtered_df[filtered_df['Action'].isin(dividend_actions)]
@@ -485,10 +485,10 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
             dividend_df['No. of shares'], dividend_df['Total($)'], dividend_df['Price / share'], dividend_df['Action'])),
         hovertemplate='<b>%{customdata[3]}</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
-        '<b>Stock Price / share:</b> %{y} ($)<br>'
-        '<b>Dividend Price / share:</b> %{customdata[2]} ($)<br>'
-        '<b>No. of shares:</b> %{customdata[0]}<br>'
-        '<b>Total:</b> %{customdata[1]} ($)<extra></extra>'
+        '<b>Stock Price / share:</b> %{y:.2f} ($)<br>'
+        '<b>Dividend Price / share:</b> %{customdata[2]:.2f} ($)<br>'
+        '<b>No. of shares:</b> %{customdata[0]:.2f}<br>'
+        '<b>Total:</b> %{customdata[1]:.2f} ($)<extra></extra>'
     )
 
     lineColor = 'white' if bg_color == 'black' else 'black'
