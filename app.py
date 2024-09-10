@@ -21,6 +21,7 @@ MAX_MARKER_SIZE = 40
 SHADING_OPACITY = 0.3
 STOCK_NOT_SHOW = ['PBCT', 'LVGO', 'STOR', 'SBNY', 'WORK']
 
+
 class SizeMapper:
     def __init__(self, range, scale=(0, 10), log=False):
         """
@@ -163,20 +164,18 @@ def getStockPrice(df: pd.DataFrame):
             df_ticker_map[row['Ticker']]['shares'] += shares
     # Update maxDate to today's date if shares equal zero
 
-    sold = []
-    hold = []
-    
+    sold_holding_tickers = set()
+    current_holding_tickers = set()
+
     for ticker, data in df_ticker_map.items():
         if data['shares'] > 1:
             if ticker not in ['AAPL', 'AMAT', 'AMT', 'AMZN', 'AVGO', 'BKNG', 'CAT', 'COST', 'CRM', 'GOOGL', 'HD', 'HRZN', 'INTU', 'MA', 'MCO', 'NNN', 'O', 'SPG', 'SPGI', 'UNH', 'V', 'VICI']:
                 print(ticker)
                 print(df_ticker_map[ticker])
             data['maxDate'] = pd.Timestamp(datetime.now().date())
-            hold.append((ticker, data['shares']))
+            current_holding_tickers.add((ticker))
         else:
-            sold.append(ticker)
-    print(len(sold),'sold:', sold)
-    print(len(hold),'hold:', hold)
+            sold_holding_tickers.add(ticker)
     stockPrice = {}
     for ticker in df_ticker_map.keys():
         min_date = df_ticker_map[ticker]['minDate']
@@ -194,7 +193,7 @@ def getStockPrice(df: pd.DataFrame):
                 'price': price_data
             }
 
-    return stockPrice
+    return stockPrice, sold_holding_tickers, current_holding_tickers
 
 
 def addROIStockPrice(stockPrice, df_meta):
@@ -255,7 +254,7 @@ getAveragePrice = getAveragePriceOuter(df_meta)
 # Convert 'Transaction Date' to datetime
 df['Transaction Date'] = pd.to_datetime(
     df['Transaction Date'], format='%Y/%m/%d')
-stocksPrice = getStockPrice(df)
+stocksPrice, sold_holding_tickers, current_holding_tickers = getStockPrice(df)
 addROIStockPrice(stocksPrice, df_meta)
 
 # Define a function to map ROI to colors
@@ -279,7 +278,7 @@ app.layout = html.Div([
                 value='black',
                 labelStyle={'display': 'block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '14.28%'}),
+        ], style={'width': '12.5%'}),
         html.Div([
             html.Label('ROI Filter:'),
             dcc.RadioItems(
@@ -292,7 +291,20 @@ app.layout = html.Div([
                 value='all',
                 labelStyle={'display': 'block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '14.28%'}),
+        ], style={'width': '12.5%'}),
+        html.Div([
+            html.Label('Holding Filter:'),
+            dcc.RadioItems(
+                id='holding_filter',
+                options=[
+                    {'label': 'all', 'value': 'all'},
+                    {'label': 'current', 'value': 'current'},
+                    {'label': 'sold', 'value': 'sold'}
+                ],
+                value='all',
+                labelStyle={'display': 'block', 'margin-bottom': '5px'}
+            )
+        ], style={'width': '12.5%'}),
         html.Div([
             html.Label('Moving Average:'),
             dcc.Checklist(
@@ -303,7 +315,7 @@ app.layout = html.Div([
                 value=[],
                 style={'width': '100%'}
             )
-        ], style={'width': '14.28%'}),
+        ], style={'width': '12.5%'}),
 
         html.Div([
             html.Label('Color Map Type:'),
@@ -316,7 +328,7 @@ app.layout = html.Div([
                 value='discrete',
                 labelStyle={'display': 'block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '14.28%'}),
+        ], style={'width': '12.5%'}),
 
         html.Div([
             html.Label('Y-axis Maximum Value:'),
@@ -327,7 +339,7 @@ app.layout = html.Div([
                 step=50,
                 style={'width': '50px'}
             )
-        ], style={'width': '14.28%'}),
+        ], style={'width': '12.5%'}),
         html.Div([
             html.Label('Line Width:'),
             dcc.Input(
@@ -358,7 +370,7 @@ app.layout = html.Div([
                 style={'width': '50px'}
             ),
 
-        ], style={'width': '14.28%'}),
+        ], style={'width': '12.5%'}),
 
         html.Div([
             html.Label('Show Data:'),
@@ -373,7 +385,7 @@ app.layout = html.Div([
                 value=['market_buy', 'market_sell', 'dividend'],
                 style={'width': '100%'}
             )
-        ], style={'width': '14.28%'}),
+        ], style={'width': '12.5%'}),
 
     ], style={'display': 'flex', 'justify-content': 'space-between', 'flex-wrap': 'wrap'}),
 
@@ -392,12 +404,13 @@ app.layout = html.Div([
      Input('default_y_max', 'value'),
      Input('line_width', 'value'),
      Input('roi-filter', 'value'),
+     Input('holding_filter', 'value'),
      Input('shading', 'value'),
      Input('shading_gradient', 'value'),
      Input('show_data', 'value')
      ]
 )
-def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter, shading, shading_gradient, show_data):
+def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter, holding_filter, shading, shading_gradient, show_data):
     # Create the layout with the selected background color
 
     # add marker size based on the min and max value for the market buy and sell action
@@ -424,6 +437,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         MIN_MARKER_SIZE, MAX_MARKER_SIZE), log=False)
     df['Marker Size'] = df['Total($)'].apply(size_mapper)
     df.to_csv('df.csv')  # save for debug
+
     # Filter the data by ROI
     if roi_filter in ['positive', 'negative']:
         def condition(
@@ -433,8 +447,17 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
     else:  # roi_filter == 'all'
         roi_dict = {ticker: data['ROI']
                     for ticker, data in stocksPrice.items()}
-    filtered_df = df[df['Ticker'].isin(roi_dict.keys())]
+    filtered_df = df[df['Ticker'].isin(roi_dict.keys())]  # filter by roi_dict
 
+    # filter by holdings
+    if holding_filter == 'current':
+        holding_set = current_holding_tickers
+    elif holding_filter == 'sold':
+        holding_set = sold_holding_tickers
+    else:
+        holding_set = current_holding_tickers.union(sold_holding_tickers)
+    filtered_df = filtered_df[filtered_df['Ticker'].isin(holding_set)]
+    
     # Create traces for each action type
     buy_df = filtered_df[filtered_df['Action'] == 'Market buy']
     buy_trace = go.Scatter(
@@ -465,7 +488,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         lambda row: 'red' if row['Price / share(gbp)'] < getAveragePrice(row['Ticker']) else 'green', axis=1)
     sell_df['Price Difference(gbp)'] = sell_df.apply(
         lambda row: row['Price / share(gbp)'] - getAveragePrice(row['Ticker']), axis=1)
-    sell_df['Price Difference'] = sell_df['Price Difference(gbp)'] * sell_df['Exchange rate'].astype(float)
+    sell_df['Price Difference'] = sell_df['Price Difference(gbp)'] * \
+        sell_df['Exchange rate'].astype(float)
     sell_trace = go.Scatter(
         x=sell_df['Transaction Date'],
         y=sell_df['Price / share'],
@@ -479,7 +503,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         ),
         text=sell_df['Ticker'],
         # Combine 'Total($)' and 'No. of shares' into customdata
-        customdata=list(zip(sell_df['No. of shares'], sell_df['Total($)'], sell_df['Price Difference'])),
+        customdata=list(
+            zip(sell_df['No. of shares'], sell_df['Total($)'], sell_df['Price Difference'])),
         hovertemplate='<b>Sell</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y:.2f} ($)<br>'
@@ -546,7 +571,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
                                    minROI, maxROI, colormap,
                                    -1 if discrete_colormap == 'continuous' else NUM_COLOR_BIN)
 
-        if ticker in roi_dict:
+        if ticker in roi_dict and ticker in holding_set:
             fig.add_trace(go.Scatter(
                 x=date,
                 y=price,
