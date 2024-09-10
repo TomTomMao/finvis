@@ -161,12 +161,13 @@ def getStockPrice(df: pd.DataFrame):
             df_ticker_map[row['Ticker']]['maxDate'] = row['Transaction Date']
             df_ticker_map[row['Ticker']]['shares'] += shares
     # Update maxDate to today's date if shares equal zero
+
     for ticker, data in df_ticker_map.items():
-        if data['shares'] > 0:
-            data['maxDate'] = pd.Timestamp(datetime.now().date())
+        if data['shares'] > 1:
             if ticker not in ['AAPL', 'AMAT', 'AMT', 'AMZN', 'AVGO', 'BKNG', 'CAT', 'COST', 'CRM', 'GOOGL', 'HD', 'HRZN', 'INTU', 'MA', 'MCO', 'NNN', 'O', 'SPG', 'SPGI', 'UNH', 'V', 'VICI']:
                 print(ticker)
                 print(df_ticker_map[ticker])
+            data['maxDate'] = pd.Timestamp(datetime.now().date())
     stockPrice = {}
     for ticker in df_ticker_map.keys():
         min_date = df_ticker_map[ticker]['minDate']
