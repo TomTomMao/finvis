@@ -391,7 +391,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         'Dividend (Dividends paid by foreign corporations)',
         'Dividend (Dividend)'
     ]
-    sell_buy_dividend_actions = dividend_actions + ['Market sell', 'Market buy']
+    sell_buy_dividend_actions = dividend_actions + \
+        ['Market sell', 'Market buy']
     df_sell_buy_dividend = df[df['Action'].isin(sell_buy_dividend_actions)]
     minTotal = df_sell_buy_dividend['Total($)'].min()
     maxTotal = df_sell_buy_dividend['Total($)'].max()
@@ -440,6 +441,9 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         sell_df['Exchange rate'].astype(float)
     sell_df['color'] = sell_df.apply(
         lambda row: 'red' if row['Price / share(gbp)'] < getAveragePrice(row['Ticker']) else 'green', axis=1)
+    sell_df['Price Difference(gbp)'] = sell_df.apply(
+        lambda row: row['Price / share(gbp)'] - getAveragePrice(row['Ticker']), axis=1)
+    sell_df['Price Difference'] = sell_df['Price Difference(gbp)'] * sell_df['Exchange rate'].astype(float)
     sell_trace = go.Scatter(
         x=sell_df['Transaction Date'],
         y=sell_df['Price / share'],
@@ -453,11 +457,12 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         ),
         text=sell_df['Ticker'],
         # Combine 'Total($)' and 'No. of shares' into customdata
-        customdata=list(zip(sell_df['No. of shares'], sell_df['Total($)'])),
+        customdata=list(zip(sell_df['No. of shares'], sell_df['Total($)'], sell_df['Price Difference'])),
         hovertemplate='<b>Sell</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y} ($)<br>'
         '<b>No. of shares:</b> %{customdata[0]}<br>'
+        '<b>Price difference:</b> %{customdata[2]} ($)<br>'
         '<b>Total:</b> %{customdata[1]} ($)<extra></extra>'
     )
 
