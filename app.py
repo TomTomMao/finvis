@@ -585,7 +585,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
                     color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=line_width),
                 fill='tozeroy' if 'shading' in shading else 'none',
                 fillgradient=dict(
-                    colorscale=[[0, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, {shading_gradient})'], [
+                    colorscale=[[0, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 1)'],
+                                [shading_gradient, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0.5)'],[
                         1, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0)']],
                     type='vertical',  # Gradient orientation
                     start=max(price),  # Gradient start position
