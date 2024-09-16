@@ -15,7 +15,9 @@ COLORBAR_X = 0.5
 COLORBAR_Y = -0.25
 COLORBAR_LEN = 0.75
 DEFAULT_LINE_WIDTH = 1.3
-DEFAULT_SHADING_GRADIENT = 0.5
+DEFAULT_SHADING_TOP_OPACITY = 1
+DEFAULT_SHADING_MIDPOINT = 0.5
+DEFAULT_SHADING_MIDPOINT_OPACITY = 0.5
 MIN_MARKER_SIZE = 5
 MAX_MARKER_SIZE = 40
 SHADING_OPACITY = 0.3
@@ -361,19 +363,43 @@ app.layout = html.Div([
                     }],
                     value=['shading'],
                     style={'width': '100%'}
-                )
-            ], style={'margin-top': '10px'}),
-            html.Label('shading gradient:'),
-            dcc.Input(
-                id='shading_gradient',
-                type='number',
-                value=DEFAULT_SHADING_GRADIENT,  # Default value for the y-axis maximum
-                step=0.1,
-                min=0.1,
-                max=1,
-                style={'width': '50px'}
-            ),
+                ),
 
+            ], style={}),
+            html.Div(
+                [html.Label('shading top opacity:'),
+                 dcc.Input(
+                    id='shading_top_opacity',
+                    type='number',
+                    value=DEFAULT_SHADING_TOP_OPACITY,  # Default value for the y-axis maximum
+                    step=0.1,
+                    min=0.1,
+                    max=1,
+                    style={'width': '50px'}
+                )]
+            ),
+            html.Div([
+                html.Label('shading midpoint:'),
+                dcc.Input(
+                    id='shading_midpoint',
+                    type='number',
+                    value=DEFAULT_SHADING_MIDPOINT,  # Default value for the y-axis maximum
+                    step=0.1,
+                    min=0.1,
+                    max=1,
+                    style={'width': '50px'}
+                )]),
+            html.Div([
+                html.Label('shading midpoint opacity:'),
+                dcc.Input(
+                    id='shading_midpoint_opacity',
+                    type='number',
+                    value=DEFAULT_SHADING_MIDPOINT_OPACITY,  # Default value for the y-axis maximum
+                    step=0.1,
+                    min=0.1,
+                    max=1,
+                    style={'width': '50px'}
+                )]),
         ], style={'width': '12.5%'}),
 
         html.Div([
@@ -410,11 +436,13 @@ app.layout = html.Div([
      Input('roi-filter', 'value'),
      Input('holding_filter', 'value'),
      Input('shading', 'value'),
-     Input('shading_gradient', 'value'),
+     Input('shading_top_opacity', 'value'),
+     Input('shading_midpoint', 'value'),
+     Input('shading_midpoint_opacity', 'value'),
      Input('show_data', 'value')
      ]
 )
-def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter, holding_filter, shading, shading_gradient, show_data):
+def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data):
     # Create the layout with the selected background color
 
     # add marker size based on the min and max value for the market buy and sell action
@@ -461,7 +489,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
     else:
         holding_set = current_holding_tickers.union(sold_holding_tickers)
     filtered_df = filtered_df[filtered_df['Ticker'].isin(holding_set)]
-    
+
     # Create traces for each action type
     buy_df = filtered_df[filtered_df['Action'] == 'Market buy']
     buy_trace = go.Scatter(
@@ -585,8 +613,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
                     color=f'rgba({color[0]*255}, {color[1]*255}, {color[2]*255}, {color[3]})', width=line_width),
                 fill='tozeroy' if 'shading' in shading else 'none',
                 fillgradient=dict(
-                    colorscale=[[0, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 1)'],
-                                [shading_gradient, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0.5)'],[
+                    colorscale=[[0, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, {shading_top_opacity})'],
+                                [1 - shading_midpoint, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, {shading_midpoint_opacity})'], [
                         1, f'rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0)']],
                     type='vertical',  # Gradient orientation
                     start=max(price),  # Gradient start position
