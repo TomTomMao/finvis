@@ -403,7 +403,7 @@ app.layout = html.Div([
         ], style={'width': '12.5%'}),
 
         html.Div([
-            html.Label('Show Data:'),
+            html.Label('Action:'),
             dcc.Checklist(
                 id='show_data',
                 options=[
@@ -439,7 +439,7 @@ app.layout = html.Div([
      Input('shading_top_opacity', 'value'),
      Input('shading_midpoint', 'value'),
      Input('shading_midpoint_opacity', 'value'),
-     Input('show_data', 'value')
+     Input('show_data', 'value'),
      ]
 )
 def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data):
