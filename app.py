@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
+
 from get_50_day_moving_average import get_50_day_moving_average
 
 NUM_COLOR_BIN = 5
@@ -282,9 +283,9 @@ app.layout = html.Div([
                     {'label': 'Black Background', 'value': 'black'}
                 ],
                 value='black',
-                labelStyle={'display': 'block', 'margin-bottom': '5px'}
+                labelStyle={'display': 'inline-block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '12.5%'}),
+        ], style={'width': '16.66%'}),
         html.Div([
             html.Label('ROI Filter:'),
             dcc.RadioItems(
@@ -295,9 +296,9 @@ app.layout = html.Div([
                     {'label': 'negative', 'value': 'negative'}
                 ],
                 value='all',
-                labelStyle={'display': 'block', 'margin-bottom': '5px'}
+                labelStyle={'display': 'inline-block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '12.5%'}),
+        ], style={'width': '16.66%'}),
         html.Div([
             html.Label('Holding Filter:'),
             dcc.RadioItems(
@@ -308,9 +309,9 @@ app.layout = html.Div([
                     {'label': 'sold', 'value': 'sold'}
                 ],
                 value='all',
-                labelStyle={'display': 'block', 'margin-bottom': '5px'}
+                labelStyle={'display': 'inline-block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '12.5%'}),
+        ], style={'width': '16.66%'}),
         html.Div([
             html.Label('Moving Average:'),
             dcc.Checklist(
@@ -321,7 +322,7 @@ app.layout = html.Div([
                 value=[],
                 style={'width': '100%'}
             )
-        ], style={'width': '12.5%'}),
+        ], style={'width': '16.66%'}),
 
         html.Div([
             html.Label('Color Map Type:'),
@@ -332,10 +333,60 @@ app.layout = html.Div([
                     {'label': 'Continuous color', 'value': 'continuous'}
                 ],
                 value='discrete',
-                labelStyle={'display': 'block', 'margin-bottom': '5px'}
+                labelStyle={'display': 'inline-block', 'margin-bottom': '5px'}
             )
-        ], style={'width': '12.5%'}),
+        ], style={'width': '16.66%'}),
 
+        html.Div([
+            html.Label('Action:'),
+            html.Div([
+                html.Div([
+                    dcc.Checklist(
+                        id='show_data_1',
+                        options=[
+                            {'label': 'Market Buy', 'value': 'market_buy'}],
+                        value=['market_buy'],
+                        style={'display': 'inline-block'}
+                    )
+                ]),
+
+                # Second checklist
+                html.Div([
+                    dcc.Checklist(
+                        id='show_data_2',
+                        options=[{'label': 'Market Sell', 'value': 'market_sell'}],
+                        value=['option_a'],
+                        style={'display': 'inline-block'}
+                    )
+                ]),
+
+                # Third checklist
+                html.Div([
+                    dcc.Checklist(
+                        id='show_data_3',
+                        options=[{'label': 'Dividend', 'value': 'dividend'}],
+                        value=['choice_x'],
+                        style={'display': 'inline-block'}
+                    )
+                ])
+            ], style={'display': 'flex', 'justify-content': 'start', 'flex-wrap': 'wrap'})
+            # dcc.Checklist(
+            #     id='show_data',
+            #     options=[
+            #         {'label': 'Market Buy', 'value': 'market_buy'},
+            #         {'label': 'Market Sell', 'value': 'market_sell'},
+            #         {'label': 'Dividend', 'value': 'dividend'}
+            #     ],
+            #     # Default value, no items checked
+            #     value=['market_buy', 'market_sell', 'dividend'],
+            #     style={'display': 'inline-block', 'width': '100%'}
+            # )
+        ], style={'width': '16.66%'}),
+
+    ], style={'display': 'flex', 'justify-content': 'space-between', 'flex-wrap': 'wrap'}),
+
+    # second row for sliders
+    html.Div([
         html.Div([
             html.Label('Y-axis Value:'),
             dcc.RangeSlider(
@@ -345,11 +396,11 @@ app.layout = html.Div([
                 marks=None,
                 tooltip={"placement": "bottom", "always_visible": True}
             )
-        ], style={'width': '12.5%'}),
+        ], style={'width': '20%'}),
         html.Div([
             html.Label('Line Width:'),
             dcc.Slider(
-                0.1, 2, 0.1, value=DEFAULT_LINE_WIDTH, marks=None, tooltip={"placement": "bottom", "always_visible": False}, id='line_width',
+                0.1, 2, 0.1, value=DEFAULT_LINE_WIDTH, marks=None, tooltip={"placement": "bottom", "always_visible": True}, id='line_width',
             ),
             html.Div([
                 dcc.Checklist(
@@ -360,56 +411,39 @@ app.layout = html.Div([
                     value=['shading'],
                     style={'width': '100%'}
                 ),
-
-            ], style={}),
-            html.Div(
-                [html.Label('shading top opacity:'),
+            ]),
+        ], style={'width': '20%'}),
+        html.Div([
+            html.Label('shading top opacity:'),
                  dcc.Slider(0.1, 1, 0.1, value=DEFAULT_SHADING_TOP_OPACITY, marks=None, tooltip={
                             "placement": "bottom", "always_visible": True}, id='shading_top_opacity')
-                 ]
-            ),
-            html.Div([
-                html.Label('shading midpoint:'),
-                dcc.Slider(
-                    min=0.1,
-                    max=1,
-                    step=0.1,
-                    value=DEFAULT_SHADING_MIDPOINT,  # Default value for the y-axis maximum
-                    marks=None, tooltip={
-                        "placement": "bottom", "always_visible": True},
-                    id='shading_midpoint',
-                )]),
-            html.Div([
-                html.Label('shading midpoint opacity:'),
-                dcc.Slider(
-                    0.1,
-                    1,
-                    0.1,
-                    value=DEFAULT_SHADING_MIDPOINT_OPACITY,  # Default value for the y-axis maximum
-                    marks=None, tooltip={
-                        "placement": "bottom", "always_visible": True},
-                    id='shading_midpoint_opacity',
-                )]),
-        ], style={'width': '12.5%'}),
-
+                 ], style={'width': '20%'}),
         html.Div([
-            html.Label('Action:'),
-            dcc.Checklist(
-                id='show_data',
-                options=[
-                    {'label': 'Market Buy', 'value': 'market_buy'},
-                    {'label': 'Market Sell', 'value': 'market_sell'},
-                    {'label': 'Dividend', 'value': 'dividend'}
-                ],
-                # Default value, no items checked
-                value=['market_buy', 'market_sell', 'dividend'],
-                style={'width': '100%'}
+            html.Label('shading midpoint:'),
+            dcc.Slider(
+                min=0.1,
+                max=1,
+                step=0.1,
+                value=DEFAULT_SHADING_MIDPOINT,  # Default value for the y-axis maximum
+                marks=None, tooltip={
+                    "placement": "bottom", "always_visible": True},
+                id='shading_midpoint',
             )
-        ], style={'width': '12.5%'}),
-
+        ], style={'width': '20%'}),
+        html.Div([
+            html.Label('shading midpoint opacity:'),
+            dcc.Slider(
+                0.1,
+                1,
+                0.1,
+                value=DEFAULT_SHADING_MIDPOINT_OPACITY,  # Default value for the y-axis maximum
+                marks=None, tooltip={
+                    "placement": "bottom", "always_visible": True},
+                id='shading_midpoint_opacity',
+            )
+        ], style={'width': '20%'}),
     ], style={'display': 'flex', 'justify-content': 'space-between', 'flex-wrap': 'wrap'}),
-
-    # Second row for the chart
+    # Third row for the chart
     html.Div([
         dcc.Graph(id='line-chart', style={'width': '100%'})
     ], style={'padding': '20px'})
@@ -429,10 +463,12 @@ app.layout = html.Div([
      Input('shading_top_opacity', 'value'),
      Input('shading_midpoint', 'value'),
      Input('shading_midpoint_opacity', 'value'),
-     Input('show_data', 'value'),
+     Input('show_data_1', 'value'),
+     Input('show_data_2', 'value'),
+     Input('show_data_3', 'value'),
      ]
 )
-def update_chart(bg_color, moving_average, discrete_colormap, y_range, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data):
+def update_chart(bg_color, moving_average, discrete_colormap, y_range, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data_1, show_data_2, show_data_3):
     # Create the layout with the selected background color
 
     # add marker size based on the min and max value for the market buy and sell action
@@ -615,7 +651,8 @@ def update_chart(bg_color, moving_average, discrete_colormap, y_range, line_widt
                 f"<b>Price / share:</b> %{{y:.2f}} ($)<br>"
                 f"<b>ROI:</b> {ROI:.2f}<extra></extra>"
             ))
-
+    
+    show_data = show_data_1 + show_data_2 + show_data_3
     if 'market_buy' in show_data:
         fig.add_trace(buy_trace)
     if 'market_sell' in show_data:
