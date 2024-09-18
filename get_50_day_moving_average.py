@@ -36,21 +36,23 @@ def get_50_day_moving_average(ticker, start_date, end_date):
 
     # Calculate the 50-day moving average
     stock_data['50_day_MA'] = stock_data['Close'].rolling(window=50).mean()
-
     # Filter the data to only include the range between start_date and end_date
     filtered_stock_data = stock_data.loc[start_date_dt:end_date_dt]
     
     # replace empty value by the mean value of the previous values if there is less than 50 values
     i = 0
     sum_price = 0
+    replaced = []
     for i in range(0, min(49, filtered_stock_data.shape[0])):
         divider = i + 1
         sum_price += filtered_stock_data.iloc[i]['Close']
         if pd.isna(filtered_stock_data.iloc[i]['50_day_MA']):
             filtered_stock_data.iloc[i, filtered_stock_data.columns.get_loc('50_day_MA')] = sum_price / divider
+            replaced.append(i)
     
     # Save the filtered data to a CSV file in the stocksprice folder
     filtered_stock_data[['Close', '50_day_MA']].to_csv(file_name)
     print(f"Data saved to {file_name}")
-
+    if len(replaced) > 0:
+        print(f"stock {ticker} does not have enough data for 50 day moving average, these days' data are calculated differently" ,replaced)
     return filtered_stock_data[['Close', '50_day_MA']], None
