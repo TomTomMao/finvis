@@ -404,15 +404,15 @@ app.layout = html.Div([
         ], style={'width': '20%'}),
         html.Div([
             html.Label('shading top opacity:'),
-                 dcc.Slider(0.1, 1, 0.1, value=DEFAULT_SHADING_TOP_OPACITY, marks=None, tooltip={
+                 dcc.Slider(0.01, 1, 0.01, value=DEFAULT_SHADING_TOP_OPACITY, marks=None, tooltip={
                             "placement": "bottom", "always_visible": True}, id='shading_top_opacity')
                  ], style={'width': '20%'}),
         html.Div([
             html.Label('shading midpoint:'),
             dcc.Slider(
-                min=0.1,
+                min=0.01,
                 max=1,
-                step=0.1,
+                step=0.01,
                 value=DEFAULT_SHADING_MIDPOINT,  # Default value for the y-axis maximum
                 marks=None, tooltip={
                     "placement": "bottom", "always_visible": True},
@@ -422,9 +422,9 @@ app.layout = html.Div([
         html.Div([
             html.Label('shading midpoint opacity:'),
             dcc.Slider(
-                0.1,
+                0.01,
                 1,
-                0.1,
+                0.01,
                 value=DEFAULT_SHADING_MIDPOINT_OPACITY,  # Default value for the y-axis maximum
                 marks=None, tooltip={
                     "placement": "bottom", "always_visible": True},
