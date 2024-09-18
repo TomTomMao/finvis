@@ -370,17 +370,6 @@ app.layout = html.Div([
                     )
                 ])
             ], style={'display': 'flex', 'justify-content': 'start', 'flex-wrap': 'wrap'})
-            # dcc.Checklist(
-            #     id='show_data',
-            #     options=[
-            #         {'label': 'Market Buy', 'value': 'market_buy'},
-            #         {'label': 'Market Sell', 'value': 'market_sell'},
-            #         {'label': 'Dividend', 'value': 'dividend'}
-            #     ],
-            #     # Default value, no items checked
-            #     value=['market_buy', 'market_sell', 'dividend'],
-            #     style={'display': 'inline-block', 'width': '100%'}
-            # )
         ], style={'width': '16.66%'}),
 
     ], style={'display': 'flex', 'justify-content': 'space-between', 'flex-wrap': 'wrap'}),
