@@ -354,7 +354,8 @@ app.layout = html.Div([
                 html.Div([
                     dcc.Checklist(
                         id='show_data_2',
-                        options=[{'label': 'Market Sell', 'value': 'market_sell'}],
+                        options=[{'label': 'Market Sell',
+                                  'value': 'market_sell'}],
                         value=['market_sell'],
                         style={'display': 'inline-block'}
                     )
@@ -441,7 +442,8 @@ app.layout = html.Div([
 
 @app.callback(
     Output('line-chart', 'figure'),
-    [Input('bg-color', 'value'),
+    [Input('line-chart', 'relayoutData'),
+     Input('bg-color', 'value'),
      Input('moving_average', 'value'),
      Input('discrete_colormap', 'value'),
      Input('y_range', 'value'),
@@ -457,7 +459,7 @@ app.layout = html.Div([
      Input('show_data_3', 'value'),
      ]
 )
-def update_chart(bg_color, moving_average, discrete_colormap, y_range, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data_1, show_data_2, show_data_3):
+def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_range, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data_1, show_data_2, show_data_3):
     # Create the layout with the selected background color
 
     # add marker size based on the min and max value for the market buy and sell action
@@ -640,7 +642,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, y_range, line_widt
                 f"<b>Price / share:</b> %{{y:.2f}} ($)<br>"
                 f"<b>ROI:</b> {ROI:.2f}<extra></extra>"
             ))
-    
+
     show_data = show_data_1 + show_data_2 + show_data_3
     if 'market_buy' in show_data:
         fig.add_trace(buy_trace)
