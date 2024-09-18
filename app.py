@@ -337,13 +337,13 @@ app.layout = html.Div([
         ], style={'width': '12.5%'}),
 
         html.Div([
-            html.Label('Y-axis Maximum Value:'),
-            dcc.Input(
-                id='default_y_max',
-                type='number',
-                value=1000,  # Default value for the y-axis maximum
-                step=50,
-                style={'width': '50px'}
+            html.Label('Y-axis Value:'),
+            dcc.RangeSlider(
+                0, 1500, 10,
+                value=[0, 1000],  # Default value for the y-axis maximum
+                id='y_range',
+                marks=None,
+                tooltip={"placement": "bottom", "always_visible": True}
             )
         ], style={'width': '12.5%'}),
         html.Div([
@@ -431,7 +431,7 @@ app.layout = html.Div([
     [Input('bg-color', 'value'),
      Input('moving_average', 'value'),
      Input('discrete_colormap', 'value'),
-     Input('default_y_max', 'value'),
+     Input('y_range', 'value'),
      Input('line_width', 'value'),
      Input('roi-filter', 'value'),
      Input('holding_filter', 'value'),
@@ -442,7 +442,7 @@ app.layout = html.Div([
      Input('show_data', 'value'),
      ]
 )
-def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data):
+def update_chart(bg_color, moving_average, discrete_colormap, y_range, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data):
     # Create the layout with the selected background color
 
     # add marker size based on the min and max value for the market buy and sell action
@@ -574,7 +574,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
     layout = go.Layout(
         title='Price/Share with Market Actions and Stock Prices',
         xaxis=dict(title='Date', gridcolor=lineColor, zerolinecolor=lineColor),
-        yaxis=dict(title='Price (USD)', range=(0, default_y_max),
+        yaxis=dict(title='Price (USD)', range=(y_range[0], y_range[1]),
                    gridcolor=lineColor, zerolinecolor=lineColor),
         height=800,
         paper_bgcolor=bg_color,
@@ -643,6 +643,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, default_y_max, lin
         fig.add_trace(dummy_trace_continuous)
     else:
         fig.add_trace(dummy_trace_discrete)
+        
     return fig
 
 
