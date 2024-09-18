@@ -355,7 +355,7 @@ app.layout = html.Div([
                     dcc.Checklist(
                         id='show_data_2',
                         options=[{'label': 'Market Sell', 'value': 'market_sell'}],
-                        value=['option_a'],
+                        value=['market_sell'],
                         style={'display': 'inline-block'}
                     )
                 ]),
@@ -365,7 +365,7 @@ app.layout = html.Div([
                     dcc.Checklist(
                         id='show_data_3',
                         options=[{'label': 'Dividend', 'value': 'dividend'}],
-                        value=['choice_x'],
+                        value=['dividend'],
                         style={'display': 'inline-block'}
                     )
                 ])
