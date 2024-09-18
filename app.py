@@ -348,12 +348,8 @@ app.layout = html.Div([
         ], style={'width': '12.5%'}),
         html.Div([
             html.Label('Line Width:'),
-            dcc.Input(
-                id='line_width',
-                type='number',
-                value=DEFAULT_LINE_WIDTH,  # Default value for the y-axis maximum
-                step=0.1,
-                style={'width': '50px'}
+            dcc.Slider(
+                0.1, 2, 0.1, value=DEFAULT_LINE_WIDTH, marks=None, tooltip={"placement": "bottom", "always_visible": False}, id='line_width',
             ),
             html.Div([
                 dcc.Checklist(
@@ -368,37 +364,31 @@ app.layout = html.Div([
             ], style={}),
             html.Div(
                 [html.Label('shading top opacity:'),
-                 dcc.Input(
-                    id='shading_top_opacity',
-                    type='number',
-                    value=DEFAULT_SHADING_TOP_OPACITY,  # Default value for the y-axis maximum
-                    step=0.1,
-                    min=0.1,
-                    max=1,
-                    style={'width': '50px'}
-                )]
+                 dcc.Slider(0.1, 1, 0.1, value=DEFAULT_SHADING_TOP_OPACITY, marks=None, tooltip={
+                            "placement": "bottom", "always_visible": True}, id='shading_top_opacity')
+                 ]
             ),
             html.Div([
                 html.Label('shading midpoint:'),
-                dcc.Input(
-                    id='shading_midpoint',
-                    type='number',
-                    value=DEFAULT_SHADING_MIDPOINT,  # Default value for the y-axis maximum
-                    step=0.1,
+                dcc.Slider(
                     min=0.1,
                     max=1,
-                    style={'width': '50px'}
+                    step=0.1,
+                    value=DEFAULT_SHADING_MIDPOINT,  # Default value for the y-axis maximum
+                    marks=None, tooltip={
+                        "placement": "bottom", "always_visible": True},
+                    id='shading_midpoint',
                 )]),
             html.Div([
                 html.Label('shading midpoint opacity:'),
-                dcc.Input(
-                    id='shading_midpoint_opacity',
-                    type='number',
+                dcc.Slider(
+                    0.1,
+                    1,
+                    0.1,
                     value=DEFAULT_SHADING_MIDPOINT_OPACITY,  # Default value for the y-axis maximum
-                    step=0.1,
-                    min=0.1,
-                    max=1,
-                    style={'width': '50px'}
+                    marks=None, tooltip={
+                        "placement": "bottom", "always_visible": True},
+                    id='shading_midpoint_opacity',
                 )]),
         ], style={'width': '12.5%'}),
 
@@ -643,7 +633,7 @@ def update_chart(bg_color, moving_average, discrete_colormap, y_range, line_widt
         fig.add_trace(dummy_trace_continuous)
     else:
         fig.add_trace(dummy_trace_discrete)
-        
+
     return fig
 
 
