@@ -205,13 +205,14 @@ def addROIStockPrice(stockPrice, df_meta):
         if row['Ticker Symbol'] in stockPrice.keys():
             stockPrice[row['Ticker Symbol']
                        ]['ROI'] = row['ROI']
+            print(row['ROI'])
 
 
 def getAveragePriceOuter(df_meta: pd.DataFrame):
     ticker_average_price_map = {}
     for _, row in df_meta.iterrows():
         ticker_average_price_map[row['Ticker Symbol']
-                                 ] = row['Average Price per Share']
+                                 ] = row['Average Price per Share USD']
 
     def getAveragePriceInner(ticker):
         assert type(ticker_average_price_map[ticker]) == float, f"ticker: {ticker}, {
@@ -273,11 +274,24 @@ df['No. of shares'] = np.where(
     df['No. of shares'],
     df['No. of shares adjusted for split(s)']
 )
-df_meta = pd.read_csv('company meta 2020-2024.csv')
-# df_meta = pd.read_excel('Open Investment Data 2020-2024.xlsx', 'Company MetaData-2024')
+# df_meta = pd.read_csv('company meta 2020-2024.csv')
+df_meta = pd.read_excel('Open Investment Data 2020-2024.xlsx', 'Company MetaData-2024')
 # replace CWEN/A with CWEA
 df_meta = df_meta.replace({'CWEN/A': 'CWEN'})
+
+df_meta['Average Price per Share USD'] = np.where(df_meta['Average Price per Share after Split USD'].isnull(),
+                                                  df_meta['Average Price per Share USD\n(=Total Purchase Amount / Total Number of Shares) '],
+                                                  df_meta['Average Price per Share after Split USD'],
+)
+# replace na with 0
+df_meta['Average Price per Share USD'] = df_meta['Average Price per Share USD'].apply(
+    lambda x: 0 if pd.isna(x) else x
+)
+# calculate roi and replace na by 0
+df_meta['ROI'] = (df_meta['Current Share Price USD\n (Yahoo & Google Finance)'] - df_meta['Average Price per Share USD']) / df_meta['Average Price per Share USD']
+df_meta['ROI'] = df_meta['ROI'].apply(lambda x: 0 if pd.isna(x) or np.isinf(x) else x)
 df = df.replace({'CWEN/A': 'CWEN'})
+df_meta.to_csv('df_meta_temp.csv')
 
 getAveragePrice = getAveragePriceOuter(df_meta)
 # Convert 'Date' to datetime
@@ -551,14 +565,11 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
 
     )
     sell_df = filtered_df[filtered_df['Action'] == 'Market sell']
-    sell_df['Price / share(gbp)'] = sell_df['Price / share'] / \
-        sell_df['Exchange rate'].astype(float)
     sell_df['color'] = sell_df.apply(
-        lambda row: 'red' if row['Price / share(gbp)'] < getAveragePrice(row['Ticker']) else 'green', axis=1)
-    sell_df['Price Difference(gbp)'] = sell_df.apply(
-        lambda row: row['Price / share(gbp)'] - getAveragePrice(row['Ticker']), axis=1)
-    sell_df['Price Difference'] = sell_df['Price Difference(gbp)'] * \
-        sell_df['Exchange rate'].astype(float)
+        lambda row: 'red' if row['Price / share'] < getAveragePrice(row['Ticker']) else 'green', axis=1)
+    sell_df['Price Difference'] = sell_df.apply(
+        lambda row: row['Price / share'] - getAveragePrice(row['Ticker']), axis=1)
+    print('avgo AVG PURCHASE PRICE:',getAveragePrice('AVGO'))
     sell_trace = go.Scatter(
         x=sell_df['Date'],
         y=sell_df['Price / share'],
