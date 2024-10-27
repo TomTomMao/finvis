@@ -23,7 +23,7 @@ MIN_MARKER_SIZE = 5
 MAX_MARKER_SIZE = 40
 SHADING_OPACITY = 0.3
 STOCK_NOT_SHOW = ['PBCT', 'LVGO', 'STOR', 'SBNY', 'WORK']
-
+EXCHANGE_RATE_GBP_USD = {'2020-05-04': 1.2445, '2020-08-25': 1.315, '2020-12-02': 1.3368, '2021-01-22': 1.3682}
 
 class SizeMapper:
     def __init__(self, range, scale=(0, 10), log=False):
@@ -148,8 +148,8 @@ def get_color_by_value(value, minValue, maxValue, colormap, num_bins=-1):
 
 
 def getStockPrice(df: pd.DataFrame):
-    # sort df by transaction date
-    df_sorted = df.sort_values(by='Transaction Date', inplace=False)
+    # sort df by date
+    df_sorted = df.sort_values(by='Date', inplace=False)
     df_ticker_map = {}  # {'ticker': {minDate: , maxDate:, shares: }}
     for _, row in df_sorted.iterrows():
         if row['Action'] not in ['Market buy', 'Market sell']:
@@ -158,12 +158,12 @@ def getStockPrice(df: pd.DataFrame):
             row['No. of shares']
         if row['Ticker'] not in df_ticker_map:
             df_ticker_map[row['Ticker']] = {
-                'minDate': row['Transaction Date'],
-                'maxDate': row['Transaction Date'],
+                'minDate': row['Date'],
+                'maxDate': row['Date'],
                 'shares': shares
             }
         else:
-            df_ticker_map[row['Ticker']]['maxDate'] = row['Transaction Date']
+            df_ticker_map[row['Ticker']]['maxDate'] = row['Date']
             df_ticker_map[row['Ticker']]['shares'] += shares
     # Update maxDate to today's date if shares equal zero
 
@@ -224,7 +224,7 @@ def addStockPriceForDividend(stocksPrice, dividend_df):
     # Function to get stock price and 50-day moving average for a given row
     def get_price_and_moving_avg(row):
         ticker = row['Ticker']
-        date = row['Transaction Date']
+        date = row['Date']
 
         # Check if the ticker is in the stocksPrice dictionary
         if ticker in stocksPrice:
@@ -251,16 +251,36 @@ def addStockPriceForDividend(stocksPrice, dividend_df):
     return dividend_df
 
 
-df = pd.read_csv('2020-2024-split.csv')
+# df = pd.read_csv('2020-2024-split.csv')
+df = pd.read_excel('Open Investment Data 2020-2024.xlsx', '2020-2024 with Splits')
+df['Date'] = pd.to_datetime(
+    df['Date'], format='%Y/%m/%d')
+# replace price with adjusted price if needed
+df['Price / share'] = np.where(
+    df['Price / share adjusted for split(s) (USD)'].isnull() | (df['Price / share adjusted for split(s) (USD)'] == ''),
+    df['Price / share (USD)'],
+    df['Price / share adjusted for split(s) (USD)']
+)
+
+df['Price / share'] = df.apply(
+    lambda row: row['Price / share'] if row['Currency (Price / share)'] == 'USD' or row['Currency (Price / share)'] is np.nan
+    else row['Price / share'] / 100 * EXCHANGE_RATE_GBP_USD[row['Date'].strftime('%Y-%m-%d')],
+    axis=1
+)
+
+df['No. of shares'] = np.where(
+    df['No. of shares adjusted for split(s)'].isnull() | (df['No. of shares adjusted for split(s)'] == ''),
+    df['No. of shares'],
+    df['No. of shares adjusted for split(s)']
+)
 df_meta = pd.read_csv('company meta 2020-2024.csv')
+# df_meta = pd.read_excel('Open Investment Data 2020-2024.xlsx', 'Company MetaData-2024')
 # replace CWEN/A with CWEA
 df_meta = df_meta.replace({'CWEN/A': 'CWEN'})
 df = df.replace({'CWEN/A': 'CWEN'})
 
 getAveragePrice = getAveragePriceOuter(df_meta)
-# Convert 'Transaction Date' to datetime
-df['Transaction Date'] = pd.to_datetime(
-    df['Transaction Date'], format='%Y/%m/%d')
+# Convert 'Date' to datetime
 stocksPrice, sold_holding_tickers, current_holding_tickers = getStockPrice(df)
 addROIStockPrice(stocksPrice, df_meta)
 
@@ -463,7 +483,7 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
     # Create the layout with the selected background color
 
     # add marker size based on the min and max value for the market buy and sell action
-    df['Total($)'] = df['No. of shares']*df['Price / share']
+    # df['Total USD'] = df['No. of shares']*df['Price / share']
     # Define the list of all dividend-related actions
     dividend_actions = [
         'Dividend (Ordinary)',
@@ -478,13 +498,13 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
     sell_buy_dividend_actions = dividend_actions + \
         ['Market sell', 'Market buy']
     df_sell_buy_dividend = df[df['Action'].isin(sell_buy_dividend_actions)]
-    minTotal = df_sell_buy_dividend['Total($)'].min()
-    maxTotal = df_sell_buy_dividend['Total($)'].max()
+    minTotal = df_sell_buy_dividend['Total USD'].min()
+    maxTotal = df_sell_buy_dividend['Total USD'].max()
     print('minTotal=', minTotal, '($)')
     print('maxTotal=', maxTotal, '($)')
     size_mapper = SizeMapper(range=(minTotal, maxTotal), scale=(
         MIN_MARKER_SIZE, MAX_MARKER_SIZE), log=False)
-    df['Marker Size'] = df['Total($)'].apply(size_mapper)
+    df['Marker Size'] = df['Total USD'].apply(size_mapper)
     df.to_csv('df.csv')  # save for debug
 
     # Filter the data by ROI
@@ -510,7 +530,7 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
     # Create traces for each action type
     buy_df = filtered_df[filtered_df['Action'] == 'Market buy']
     buy_trace = go.Scatter(
-        x=buy_df['Transaction Date'],
+        x=buy_df['Date'],
         y=buy_df['Price / share'],
         mode='markers',
         name='Market buy',
@@ -521,8 +541,8 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
             line=dict(width=0)
         ),
         text=buy_df['Ticker'],
-        # Combine 'Total($)' and 'No. of shares' into customdata
-        customdata=list(zip(buy_df['No. of shares'], buy_df['Total($)'])),
+        # Combine 'Total USD' and 'No. of shares' into customdata
+        customdata=list(zip(buy_df['No. of shares'], buy_df['Total USD'])),
         hovertemplate='<b>Buy</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y:.2f} ($)<br>'
@@ -540,7 +560,7 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
     sell_df['Price Difference'] = sell_df['Price Difference(gbp)'] * \
         sell_df['Exchange rate'].astype(float)
     sell_trace = go.Scatter(
-        x=sell_df['Transaction Date'],
+        x=sell_df['Date'],
         y=sell_df['Price / share'],
         mode='markers',
         name='Market sell',
@@ -551,9 +571,9 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
             line=dict(width=0)
         ),
         text=sell_df['Ticker'],
-        # Combine 'Total($)' and 'No. of shares' into customdata
+        # Combine 'Total USD' and 'No. of shares' into customdata
         customdata=list(
-            zip(sell_df['No. of shares'], sell_df['Total($)'], sell_df['Price Difference'])),
+            zip(sell_df['No. of shares'], sell_df['Total USD'], sell_df['Price Difference'])),
         hovertemplate='<b>Sell</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Price / share:</b> %{y:.2f} ($)<br>'
@@ -565,7 +585,7 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
     dividend_df = filtered_df[filtered_df['Action'].isin(dividend_actions)]
     addStockPriceForDividend(stocksPrice, dividend_df)
     dividend_trace = go.Scatter(
-        x=dividend_df['Transaction Date'],
+        x=dividend_df['Date'],
         y=dividend_df['50-Day Moving Average' if '50_day_MA' in moving_average else 'Stock Price on Date'],
         mode='markers',
         name='Dividend',
@@ -576,9 +596,9 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
             line=dict(width=0)
         ),
         text=dividend_df['Ticker'],
-        # Combine 'Total($)' and 'No. of shares' into customdata
+        # Combine 'Total USD' and 'No. of shares' into customdata
         customdata=list(zip(
-            dividend_df['No. of shares'], dividend_df['Total($)'], dividend_df['Price / share'], dividend_df['Action'])),
+            dividend_df['No. of shares'], dividend_df['Total USD'], dividend_df['Price / share'], dividend_df['Action'])),
         hovertemplate='<b>%{customdata[3]}</b></br><b>Ticker:</b> %{text}<br>'
         '<b>Date:</b> %{x}<br>'
         '<b>Stock Price / share:</b> %{y:.2f} ($)<br>'
