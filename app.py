@@ -496,18 +496,24 @@ app.layout = html.Div([
     ], style={'width': '100%'}),
 ])
 
-# @app.callback(
-#     Output('ticker-dropdown', 'options'),
-#     [Input('roi-filter', 'value'),
-#      Input('holding_filter', 'value'),]
-#     # You can add more inputs here that affect the filtering logic
-# )
-# def update_dropdown():
-#     # Filter the DataFrame based on your desired logic, e.g., ROI or actions
-#     filtered_df = df[df['Action'] == 'Market buy']  # Adjust filter logic as needed
-#     unique_tickers = filtered_df['Ticker'].unique()
-#     ticker_options = [{'label': ticker, 'value': ticker} for ticker in unique_tickers]
-    
+@app.callback(
+    Output('ticker-dropdown', 'options'),
+    [Input('roi-filter', 'value'),
+     Input('holding_filter', 'value'),]
+    # You can add more inputs here that affect the filtering logic
+)
+def update_dropdown(roi_filter, holding_filter):
+    # Filter the DataFrame based ROI and holding options
+    # Filter the data by ROI
+    filtered_df_roi, roi_dict = filterByRoi(df, roi_filter)
+    # print('roi_dict', roi_dict)
+    # filter by holdings
+    filtered_df_roi_holding, holding_set = filterByHolding(filtered_df_roi, holding_filter)
+    # print('holding_set', holding_set)
+    ticker_set = set(roi_dict.keys()) & holding_set
+    ticker_options = [{'label': ticker, 'value': ticker} for ticker in sorted(list(ticker_set))]
+    return ticker_options
+
 def filterByRoi(df, roi_filter):
     print('filterByRoiParams:', df, roi_filter)
     if roi_filter in ['positive', 'negative']:
