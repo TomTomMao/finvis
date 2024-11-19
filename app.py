@@ -595,10 +595,12 @@ def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete
     # print('holding_set', holding_set)
     filtered_df = filtered_df_roi_holding
     ticker_set = set(roi_dict.keys()) & holding_set
-    if selected_ticker:
-        print(selected_ticker)
+    print('selected_ticker', selected_ticker)
     # Create traces for each action type
     buy_df = filtered_df[filtered_df['Action'] == 'Market buy']
+    #apply ticker picker if picked
+    if (selected_ticker != 'all'):
+        buy_df = buy_df[buy_df['Ticker'] == selected_ticker]
     buy_trace = go.Scatter(
         x=buy_df['Date'],
         y=buy_df['Price / share'],
@@ -626,6 +628,9 @@ def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete
     sell_df['Price Difference'] = sell_df.apply(
         lambda row: row['Price / share'] - getAveragePrice(row['Ticker']), axis=1)
     print('avgo AVG PURCHASE PRICE:', getAveragePrice('AVGO'))
+    #apply ticker picker if picked
+    if (selected_ticker != 'all'):
+        sell_df = sell_df[sell_df['Ticker'] == selected_ticker]
     sell_trace = go.Scatter(
         x=sell_df['Date'],
         y=sell_df['Price / share'],
@@ -650,6 +655,8 @@ def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete
     )
 
     dividend_df = filtered_df[filtered_df['Action'].isin(dividend_actions)]
+    if (selected_ticker != 'all'):
+        dividend_df = dividend_df[dividend_df['Ticker'] == selected_ticker]
     addStockPriceForDividend(stocksPrice, dividend_df)
     dividend_trace = go.Scatter(
         x=dividend_df['Date'],
