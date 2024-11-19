@@ -485,12 +485,10 @@ app.layout = html.Div([
         dcc.Dropdown(
             id='ticker-dropdown',
             options=[
-                {'label': 'AAPL', 'value': 'AAPL'},
-                {'label': 'MSFT', 'value': 'MSFT'},
-                {'label': 'GOOGL', 'value': 'GOOGL'}
+                {'label': 'all', 'value': 'all'},
                 # Add more tickers as needed
             ],
-            value='AAPL',  # Default selected ticker
+            value='all',  # Default selected ticker
             multi=False  # Set to True if you want to allow multiple selections
         )
     ], style={'width': '100%'}),
@@ -508,11 +506,13 @@ def update_dropdown(roi_filter, holding_filter):
     filtered_df_roi, roi_dict = filterByRoi(df, roi_filter)
     # print('roi_dict', roi_dict)
     # filter by holdings
-    filtered_df_roi_holding, holding_set = filterByHolding(filtered_df_roi, holding_filter)
+    __, holding_set = filterByHolding(filtered_df_roi, holding_filter)
     # print('holding_set', holding_set)
     ticker_set = set(roi_dict.keys()) & holding_set
     ticker_options = [{'label': ticker, 'value': ticker} for ticker in sorted(list(ticker_set))]
-    return ticker_options
+    ticker_options_with_all = [{'label': 'all', 'value': 'all'}]
+    ticker_options_with_all.extend(ticker_options)
+    return ticker_options_with_all
 
 def filterByRoi(df, roi_filter):
     print('filterByRoiParams:', df, roi_filter)
@@ -554,10 +554,11 @@ def filterByHolding(df, holding_filter):
      Input('show_data_1', 'value'),
      Input('show_data_2', 'value'),
      Input('show_data_3', 'value'),
+     Input('ticker-dropdown', 'value')
      ]
 )
 
-def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete_colormap, y_range, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data_1, show_data_2, show_data_3):
+def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete_colormap, y_range, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data_1, show_data_2, show_data_3, selected_ticker):
     print('affected_traces', restyle_data)
     # Create the layout with the selected background color
 
@@ -594,6 +595,8 @@ def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete
     # print('holding_set', holding_set)
     filtered_df = filtered_df_roi_holding
     ticker_set = set(roi_dict.keys()) & holding_set
+    if selected_ticker:
+        print(selected_ticker)
     # Create traces for each action type
     buy_df = filtered_df[filtered_df['Action'] == 'Market buy']
     buy_trace = go.Scatter(
@@ -695,7 +698,7 @@ def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete
     minROI = min(ROI)
     maxROI = max(ROI)
 
-    for __, ticker in enumerate(tickers):
+    for __, ticker in enumerate(sorted(tickers)):
         data = stocksPrice[ticker]
         date = data['price'].index
         price = data['price']['50_day_MA' if '50_day_MA' in moving_average else 'Close']
