@@ -23,7 +23,9 @@ MIN_MARKER_SIZE = 5
 MAX_MARKER_SIZE = 40
 SHADING_OPACITY = 0.3
 STOCK_NOT_SHOW = ['PBCT', 'LVGO', 'STOR', 'SBNY', 'WORK']
-EXCHANGE_RATE_GBP_USD = {'2020-05-04': 1.2445, '2020-08-25': 1.315, '2020-12-02': 1.3368, '2021-01-22': 1.3682}
+EXCHANGE_RATE_GBP_USD = {'2020-05-04': 1.2445,
+                         '2020-08-25': 1.315, '2020-12-02': 1.3368, '2021-01-22': 1.3682}
+
 
 class SizeMapper:
     def __init__(self, range, scale=(0, 10), log=False):
@@ -253,12 +255,14 @@ def addStockPriceForDividend(stocksPrice, dividend_df):
 
 
 # df = pd.read_csv('2020-2024-split.csv')
-df = pd.read_excel('Open Investment Data 2020-2024.xlsx', '2020-2024 with Splits')
+df = pd.read_excel('Open Investment Data 2020-2024.xlsx',
+                   '2020-2024 with Splits')
 df['Date'] = pd.to_datetime(
     df['Date'], format='%Y/%m/%d')
 # replace price with adjusted price if needed
 df['Price / share'] = np.where(
-    df['Price / share adjusted for split(s) (USD)'].isnull() | (df['Price / share adjusted for split(s) (USD)'] == ''),
+    df['Price / share adjusted for split(s) (USD)'].isnull() | (
+        df['Price / share adjusted for split(s) (USD)'] == ''),
     df['Price / share (USD)'],
     df['Price / share adjusted for split(s) (USD)']
 )
@@ -270,26 +274,31 @@ df['Price / share'] = df.apply(
 )
 
 df['No. of shares'] = np.where(
-    df['No. of shares adjusted for split(s)'].isnull() | (df['No. of shares adjusted for split(s)'] == ''),
+    df['No. of shares adjusted for split(s)'].isnull() | (
+        df['No. of shares adjusted for split(s)'] == ''),
     df['No. of shares'],
     df['No. of shares adjusted for split(s)']
 )
 # df_meta = pd.read_csv('company meta 2020-2024.csv')
-df_meta = pd.read_excel('Open Investment Data 2020-2024.xlsx', 'Company MetaData-2024')
+df_meta = pd.read_excel(
+    'Open Investment Data 2020-2024.xlsx', 'Company MetaData-2024')
 # replace CWEN/A with CWEA
 df_meta = df_meta.replace({'CWEN/A': 'CWEN'})
 
 df_meta['Average Price per Share USD'] = np.where(df_meta['Average Price per Share after Split USD'].isnull(),
-                                                  df_meta['Average Price per Share USD\n(=Total Purchase Amount / Total Number of Shares) '],
+                                                  df_meta[
+                                                      'Average Price per Share USD\n(=Total Purchase Amount / Total Number of Shares) '],
                                                   df_meta['Average Price per Share after Split USD'],
-)
+                                                  )
 # replace na with 0
 df_meta['Average Price per Share USD'] = df_meta['Average Price per Share USD'].apply(
     lambda x: 0 if pd.isna(x) else x
 )
 # calculate roi and replace na by 0
-df_meta['ROI'] = (df_meta['Current Share Price USD\n (Yahoo & Google Finance)'] - df_meta['Average Price per Share USD']) / df_meta['Average Price per Share USD']
-df_meta['ROI'] = df_meta['ROI'].apply(lambda x: 0 if pd.isna(x) or np.isinf(x) else x)
+df_meta['ROI'] = (df_meta['Current Share Price USD\n (Yahoo & Google Finance)'] -
+                  df_meta['Average Price per Share USD']) / df_meta['Average Price per Share USD']
+df_meta['ROI'] = df_meta['ROI'].apply(
+    lambda x: 0 if pd.isna(x) or np.isinf(x) else x)
 df = df.replace({'CWEN/A': 'CWEN'})
 df_meta.to_csv('df_meta_temp.csv')
 
@@ -470,13 +479,61 @@ app.layout = html.Div([
     # Third row for the chart
     html.Div([
         dcc.Graph(id='line-chart', style={'width': '100%'})
-    ], style={'padding': '20px'})
+    ], style={'padding': '20px'}),
+    html.Div([
+        html.Label('Select Stock Ticker:'),
+        dcc.Dropdown(
+            id='ticker-dropdown',
+            options=[
+                {'label': 'AAPL', 'value': 'AAPL'},
+                {'label': 'MSFT', 'value': 'MSFT'},
+                {'label': 'GOOGL', 'value': 'GOOGL'}
+                # Add more tickers as needed
+            ],
+            value='AAPL',  # Default selected ticker
+            multi=False  # Set to True if you want to allow multiple selections
+        )
+    ], style={'width': '100%'}),
 ])
 
-
+# @app.callback(
+#     Output('ticker-dropdown', 'options'),
+#     [Input('roi-filter', 'value'),
+#      Input('holding_filter', 'value'),]
+#     # You can add more inputs here that affect the filtering logic
+# )
+# def update_dropdown():
+#     # Filter the DataFrame based on your desired logic, e.g., ROI or actions
+#     filtered_df = df[df['Action'] == 'Market buy']  # Adjust filter logic as needed
+#     unique_tickers = filtered_df['Ticker'].unique()
+#     ticker_options = [{'label': ticker, 'value': ticker} for ticker in unique_tickers]
+    
+def filterByRoi(df, roi_filter):
+    print('filterByRoiParams:', df, roi_filter)
+    if roi_filter in ['positive', 'negative']:
+        def condition(
+            roi): return roi >= 0 if roi_filter == 'positive' else roi < 0
+        roi_dict = {ticker: data['ROI'] for ticker,
+                    data in stocksPrice.items() if condition(data['ROI'])}
+    else:  # roi_filter == 'all'
+        roi_dict = {ticker: data['ROI']
+                    for ticker, data in stocksPrice.items()}
+    filtered_df_roi = df[df['Ticker'].isin(roi_dict.keys())]  # filter by roi_dict
+    return filtered_df_roi, roi_dict
+def filterByHolding(df, holding_filter):
+    if holding_filter == 'current':
+        holding_set = current_holding_tickers
+    elif holding_filter == 'sold':
+        holding_set = sold_holding_tickers
+    else:
+        holding_set = current_holding_tickers.union(sold_holding_tickers)
+    filtered_df_roi_holding = df[df['Ticker'].isin(holding_set)]
+    return filtered_df_roi_holding, holding_set
+#     return ticker_options
 @app.callback(
     Output('line-chart', 'figure'),
-    [Input('line-chart', 'relayoutData'),
+    [Input('line-chart', 'restyleData'),
+     Input('line-chart', 'relayoutData'),
      Input('bg-color', 'value'),
      Input('moving_average', 'value'),
      Input('discrete_colormap', 'value'),
@@ -493,7 +550,9 @@ app.layout = html.Div([
      Input('show_data_3', 'value'),
      ]
 )
-def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_range, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data_1, show_data_2, show_data_3):
+
+def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete_colormap, y_range, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data_1, show_data_2, show_data_3):
+    print('affected_traces', restyle_data)
     # Create the layout with the selected background color
 
     # add marker size based on the min and max value for the market buy and sell action
@@ -520,27 +579,15 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
         MIN_MARKER_SIZE, MAX_MARKER_SIZE), log=False)
     df['Marker Size'] = df['Total USD'].apply(size_mapper)
     df.to_csv('df.csv')  # save for debug
-
+    
     # Filter the data by ROI
-    if roi_filter in ['positive', 'negative']:
-        def condition(
-            roi): return roi >= 0 if roi_filter == 'positive' else roi < 0
-        roi_dict = {ticker: data['ROI'] for ticker,
-                    data in stocksPrice.items() if condition(data['ROI'])}
-    else:  # roi_filter == 'all'
-        roi_dict = {ticker: data['ROI']
-                    for ticker, data in stocksPrice.items()}
-    filtered_df = df[df['Ticker'].isin(roi_dict.keys())]  # filter by roi_dict
-
+    filtered_df_roi, roi_dict = filterByRoi(df, roi_filter)
+    # print('roi_dict', roi_dict)
     # filter by holdings
-    if holding_filter == 'current':
-        holding_set = current_holding_tickers
-    elif holding_filter == 'sold':
-        holding_set = sold_holding_tickers
-    else:
-        holding_set = current_holding_tickers.union(sold_holding_tickers)
-    filtered_df = filtered_df[filtered_df['Ticker'].isin(holding_set)]
-
+    filtered_df_roi_holding, holding_set = filterByHolding(filtered_df_roi, holding_filter)
+    # print('holding_set', holding_set)
+    filtered_df = filtered_df_roi_holding
+    ticker_set = set(roi_dict.keys()) & holding_set
     # Create traces for each action type
     buy_df = filtered_df[filtered_df['Action'] == 'Market buy']
     buy_trace = go.Scatter(
@@ -569,7 +616,7 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
         lambda row: 'red' if row['Price / share'] < getAveragePrice(row['Ticker']) else 'green', axis=1)
     sell_df['Price Difference'] = sell_df.apply(
         lambda row: row['Price / share'] - getAveragePrice(row['Ticker']), axis=1)
-    print('avgo AVG PURCHASE PRICE:',getAveragePrice('AVGO'))
+    print('avgo AVG PURCHASE PRICE:', getAveragePrice('AVGO'))
     sell_trace = go.Scatter(
         x=sell_df['Date'],
         y=sell_df['Price / share'],
@@ -624,7 +671,7 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
         xaxis=dict(title='Date', gridcolor=lineColor, zerolinecolor=lineColor),
         yaxis=dict(title='Price (USD)', range=(y_range[0], y_range[1]),
                    gridcolor=lineColor, zerolinecolor=lineColor),
-        height=800,
+        height=700,
         paper_bgcolor=bg_color,
         plot_bgcolor=bg_color,
         font=dict(color='white' if bg_color == 'black' else 'black'),
@@ -651,7 +698,7 @@ def update_chart(relayoutData, bg_color, moving_average, discrete_colormap, y_ra
                                    minROI, maxROI, colormap,
                                    -1 if discrete_colormap == 'continuous' else NUM_COLOR_BIN)
 
-        if ticker in roi_dict and ticker in holding_set:
+        if ticker in ticker_set:
             fig.add_trace(go.Scatter(
                 x=date,
                 y=price,
