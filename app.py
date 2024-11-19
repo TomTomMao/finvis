@@ -655,9 +655,9 @@ def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete
     )
 
     dividend_df = filtered_df[filtered_df['Action'].isin(dividend_actions)]
+    addStockPriceForDividend(stocksPrice, dividend_df)
     if (selected_ticker != 'all'):
         dividend_df = dividend_df[dividend_df['Ticker'] == selected_ticker]
-    addStockPriceForDividend(stocksPrice, dividend_df)
     dividend_trace = go.Scatter(
         x=dividend_df['Date'],
         y=dividend_df['50-Day Moving Average' if '50_day_MA' in moving_average else 'Stock Price on Date'],
@@ -704,7 +704,8 @@ def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete
         item['ROI']for item in stocksPrice.values()]
     minROI = min(ROI)
     maxROI = max(ROI)
-
+    if (selected_ticker != 'all'):
+        tickers = [selected_ticker]
     for __, ticker in enumerate(sorted(tickers)):
         data = stocksPrice[ticker]
         date = data['price'].index
