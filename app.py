@@ -513,7 +513,14 @@ def update_dropdown(roi_filter, holding_filter):
     ticker_options_with_all = [{'label': 'all', 'value': 'all'}]
     ticker_options_with_all.extend(ticker_options)
     return ticker_options_with_all
-
+@app.callback(
+    Output('ticker-dropdown', 'value'),
+    [Input('roi-filter', 'value'),
+     Input('holding_filter', 'value')]
+)
+def reset_dropdown_value(roi_filter, holding_filter):
+    # Whenever we update the options, reset the value to 'all'
+    return 'all'
 def filterByRoi(df, roi_filter):
     print('filterByRoiParams:', df, roi_filter)
     if roi_filter in ['positive', 'negative']:
