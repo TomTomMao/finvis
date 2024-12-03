@@ -19,8 +19,8 @@ DEFAULT_LINE_WIDTH = 1.3
 DEFAULT_SHADING_TOP_OPACITY = 0.8
 DEFAULT_SHADING_MIDPOINT = 0.44
 DEFAULT_SHADING_MIDPOINT_OPACITY = 0.23
-MIN_MARKER_SIZE = 5
-MAX_MARKER_SIZE = 40
+DEFAULT_MIN_MARKER_SIZE = 5
+DEFAULT_MAX_MARKER_SIZE = 40
 SHADING_OPACITY = 0.3
 STOCK_NOT_SHOW = ['PBCT', 'LVGO', 'STOR', 'SBNY', 'WORK']
 EXCHANGE_RATE_GBP_USD = {'2020-05-04': 1.2445,
@@ -429,7 +429,7 @@ app.layout = html.Div([
                 marks=None,
                 tooltip={"placement": "bottom", "always_visible": True}
             )
-        ], style={'width': '20%'}),
+        ], style={'width': '16.6%'}),
         html.Div([
             html.Label('Line Width:'),
             dcc.Slider(
@@ -445,12 +445,12 @@ app.layout = html.Div([
                     style={'width': '100%'}
                 ),
             ]),
-        ], style={'width': '20%'}),
+        ], style={'width': '16.6%'}),
         html.Div([
             html.Label('shading top opacity:'),
                  dcc.Slider(0.01, 1, 0.01, value=DEFAULT_SHADING_TOP_OPACITY, marks=None, tooltip={
                             "placement": "bottom", "always_visible": True}, id='shading_top_opacity')
-                 ], style={'width': '20%'}),
+                 ], style={'width': '16.6%'}),
         html.Div([
             html.Label('shading midpoint:'),
             dcc.Slider(
@@ -462,7 +462,7 @@ app.layout = html.Div([
                     "placement": "bottom", "always_visible": True},
                 id='shading_midpoint',
             )
-        ], style={'width': '20%'}),
+        ], style={'width': '16.6%'}),
         html.Div([
             html.Label('shading midpoint opacity:'),
             dcc.Slider(
@@ -474,7 +474,17 @@ app.layout = html.Div([
                     "placement": "bottom", "always_visible": True},
                 id='shading_midpoint_opacity',
             )
-        ], style={'width': '20%'}),
+        ], style={'width': '16.6%'}),
+        html.Div([
+            html.Label('Glyph Size:'),
+            dcc.RangeSlider(
+                0, 100, 1,
+                value=[DEFAULT_MIN_MARKER_SIZE, DEFAULT_MAX_MARKER_SIZE],  # Default value for the y-axis maximum
+                id='glyph_size',
+                marks=None,
+                tooltip={"placement": "bottom", "always_visible": True}
+            )
+        ], style={'width': '16.6%'}),
     ], style={'display': 'flex', 'justify-content': 'space-between', 'flex-wrap': 'wrap'}),
     # Third row for the chart
     html.Div([
@@ -561,11 +571,12 @@ def filterByHolding(df, holding_filter):
      Input('show_data_1', 'value'),
      Input('show_data_2', 'value'),
      Input('show_data_3', 'value'),
-     Input('ticker-dropdown', 'value')
+     Input('ticker-dropdown', 'value'),
+     Input('glyph_size', 'value')
      ]
 )
 
-def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete_colormap, y_range, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data_1, show_data_2, show_data_3, selected_ticker):
+def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete_colormap, y_range, line_width, roi_filter, holding_filter, shading, shading_top_opacity, shading_midpoint, shading_midpoint_opacity, show_data_1, show_data_2, show_data_3, selected_ticker,glyph_size):
     print('affected_traces', restyle_data)
     # Create the layout with the selected background color
 
@@ -590,7 +601,7 @@ def update_chart(restyle_data, relayout_data, bg_color, moving_average, discrete
     print('minTotal=', minTotal, '($)')
     print('maxTotal=', maxTotal, '($)')
     size_mapper = SizeMapper(range=(minTotal, maxTotal), scale=(
-        MIN_MARKER_SIZE, MAX_MARKER_SIZE), log=False)
+        glyph_size[0], glyph_size[1]), log=False)
     df['Marker Size'] = df['Total USD'].apply(size_mapper)
     df.to_csv('df.csv')  # save for debug
     
